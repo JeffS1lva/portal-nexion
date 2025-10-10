@@ -19,7 +19,6 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Paginacao } from "./Paginacao"
 import { format, subDays, subMonths, subYears } from "date-fns"
 import { PedidosFilter } from "./Pedidos/PedidosFilter"
-import EmptyPedidosError from "./Pedidos/EmptyPedidosError"
 import { usePedidosColumns, type Pedido } from "./Pedidos/PedidosColumns"
 
 // Tipos para os filtros
@@ -132,7 +131,7 @@ export const Pedidos: React.FC = () => {
   const [pedidos, setPedidos] = React.useState<Pedido[]>([])
   const [allPedidos, _setAllPedidos] = React.useState<Pedido[]>(generateFictionalPedidos())
   const [loading, setLoading] = React.useState<boolean>(true)
-  const [error, setError] = React.useState<string | null>(null)
+  const [_error, setError] = React.useState<string | null>(null)
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
@@ -263,13 +262,7 @@ export const Pedidos: React.FC = () => {
     }
   }, [searchValue, searchType, table])
 
-  const handleBack = () => {
-    console.log("Back button clicked")
-  }
 
-  const handleRetry = () => {
-    fetchPedidosWithDateRange(activeDateRange.start || new Date(), activeDateRange.end || new Date())
-  }
 
   // Componente de Skeleton para a tabela (desktop)
   const SkeletonTable = () => {
@@ -361,29 +354,9 @@ export const Pedidos: React.FC = () => {
     )
   }
 
-  if (error === "empty") {
-    return (
-      <EmptyPedidosError
-        message="Não foram encontrados pedidos para o período selecionado."
-        onRetry={handleRetry}
-        onBack={handleBack}
-        showBackButton={true}
-        logoUrl="/logo.svg"
-      />
-    )
-  }
+  
 
-  if (error === "error") {
-    return (
-      <EmptyPedidosError
-        message="Ocorreu um erro ao carregar os pedidos. Por favor, tente novamente."
-        onRetry={handleRetry}
-        onBack={handleBack}
-        showBackButton={true}
-        logoUrl="/logo.svg"
-      />
-    )
-  }
+  
 
   return (
     <div className="w-full p-2 md:p-4">

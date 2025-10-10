@@ -24,11 +24,9 @@ import {
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Paginacao } from "../pages/Paginacao";
-import { useNavigate } from "react-router-dom";
 import { BoletoFilter } from "./FiltersBoletos/BoletosFilter";
 import { useState, useEffect } from "react";
 import { Parcela } from "../../types/parcela";
-import EmptyBoletosError from "./FiltersBoletos/EmptyBoletosError";
 
 // Função para gerar dados fictícios de boletos compatíveis com a interface Parcela
 const generateMockParcelas = (count: number = 50): Parcela[] => {
@@ -114,7 +112,7 @@ export const Boletos: React.FC = () => {
   const [parcelas, setParcelas] = useState<Parcela[]>([]);
   const [allParcelas, setAllParcelas] = useState<Parcela[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const [_error, setError] = useState<string | null>(null);
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
@@ -131,7 +129,6 @@ export const Boletos: React.FC = () => {
   // Manter o estado da paginação atual
   const [currentPage, setCurrentPage] = useState<number>(0);
 
-  const navigate = useNavigate();
 
   // Obter as colunas usando o hook com type assertion
   const columns = useBoletosColumns() as ColumnDef<Parcela, any>[];
@@ -264,13 +261,7 @@ export const Boletos: React.FC = () => {
     }
   }, [searchValue, searchType, table, debouncedSearchValue]);
 
-  const handleBack = () => {
-    navigate("/inicio");
-  };
-
-  const handleRetry = () => {
-    fetchParcelas();
-  };
+  
 
   // Componente de Skeleton para a tabela
   const SkeletonTable = () => {
@@ -343,27 +334,9 @@ export const Boletos: React.FC = () => {
     );
   }
 
-  if (error === "empty") {
-    return (
-      <EmptyBoletosError
-        alertMessage="Não foram encontrados boletos."
-        onRetry={handleRetry}
-        onBack={handleBack}
-        showBackButton={true}
-      />
-    );
-  }
+  
 
-  if (error === "error") {
-    return (
-      <EmptyBoletosError
-        alertMessage="Ocorreu um erro ao carregar os boletos. Por favor, tente novamente."
-        onRetry={handleRetry}
-        onBack={handleBack}
-        showBackButton={true}
-      />
-    );
-  }
+  
 
   // Componente de paginação modificado para usar o estado currentPage
   const handlePageChange = (page: number) => {
