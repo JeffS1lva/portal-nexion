@@ -91,13 +91,13 @@ const ThemeAwareLogo = () => {
       <div className="relative flex-shrink-0 size-15 ">
         <img
           src={Logo || "/placeholder.svg"}
-          alt="logo polar fix"
+          alt="logo "
           className={`${isMobile ? "h-8 " : isTablet ? "h-8 " : "h-10 "
             } w-24 h-full dark:hidden transition-all duration-300`}
         />
         <img
           src={Logo || "/placeholder.svg"}
-          alt="logo polar fix"
+          alt="logo "
           className={`${isMobile ? "h-8" : isTablet ? "h-8" : "h-10"
             } w-24 h-full hidden dark:block transition-all duration-300`}
         />

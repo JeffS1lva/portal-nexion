@@ -187,7 +187,7 @@ export function ProfileSelector({ isOpen, onClose, currentUser, onSaveChanges }:
               </div>
             </SheetHeader>
 
-            <div className="py-6 space-y-8">
+            <div className="py-6 px-4 space-y-8">
               <div className="flex flex-col items-center space-y-6">
                 <div className="relative group">
                   <motion.div whileHover={{ scale: 1.02 }} className="relative">

@@ -108,7 +108,7 @@ const MobileCarousel: React.FC<{
       {/* Main carousel container */}
       <div
         ref={containerRef}
-        className="relative w-full h-64 sm:h-80 md:h-96 lg:h-[32rem] xl:h-[40rem] overflow-hidden"
+        className="relative w-full rounded-sm shadow-xl shadow-blue-950 h-64 sm:h-80 md:h-96 lg:h-[32rem] xl:h-[40rem] overflow-hidden"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -201,35 +201,35 @@ export function Init() {
   const images: ImageData[] = [
     {
       url: "https://images.unsplash.com/photo-1504384764586-bb4cdc1707b0?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-      title: "Clorexidina Polarfix",
+      title: "Work Dev",
       subtitle:
         "Eficácia comprovada no controle de infecções hospitalares com tecnologia avançada",
       badge: "Developer",
-      link: "https://polarfix.com.br/",
+      link: "",
     },
     {
       url: "https://images.unsplash.com/photo-1484807352052-23338990c6c6?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-      title: "Curativos Premium Polarfix",
+      title: "Tecnoliga de Ponta",
       subtitle:
         "Tecnologia e conforto para uma recuperação segura e eficiente em todos os procedimentos",
       badge: "Technology ",
-      link: "https://polarfix.com.br/",
+      link: "",
     },
     {
       url: "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-      title: "Esterilização de Alto Nível",
+      title: "Startup Software",
       subtitle:
         "Soluções confiáveis para ambientes clínicos exigentes com máxima segurança",
       badge: "Startup",
-      link: "https://polarfix.com.br/",
+      link: "",
     },
     {
       url: "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?q=80&w=1074&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-      title: "Proteção Antisséptica Polarfix",
+      title: "Criação de Redes",
       subtitle:
         "Máxima segurança microbiológica para sua instituição com resultados comprovados",
       badge: "Social Networks",
-      link: "https://polarfix.com.br/",
+      link: "",
     },
   ];
 
