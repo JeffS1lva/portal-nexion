@@ -40,21 +40,37 @@ export function LoginPage() {
     setLoading(true)
 
     setTimeout(() => {
+      // Extrai o nome do email e capitaliza a primeira letra
+      const emailUsername = email.split("@")[0]
+      const firstName = emailUsername.charAt(0).toUpperCase() + emailUsername.slice(1)
+
       const userData = {
-        login: email.split("@")[0],
+        login: emailUsername,
         email: email,
-        firstName: "Usuário",
-        lastName: "Demo",
+        firstName: firstName,
+        lastName: "",
         token: "mock-token-" + Date.now(),
       }
 
+      // Salva os dados no localStorage
       localStorage.setItem("isAuthenticated", "true")
       localStorage.setItem("authData", JSON.stringify(userData))
       localStorage.setItem("token", userData.token)
 
+      // Dispara evento customizado para notificar o App sobre a mudança de autenticação
+      window.dispatchEvent(new Event("authStateChange"))
+
       setLoading(false)
 
+      // Força a navegação para a página inicial
       navigate("/inicio", { replace: true })
+
+      // Fallback: se o navigate não funcionar, força reload
+      setTimeout(() => {
+        if (window.location.pathname === "/login") {
+          window.location.href = "/inicio"
+        }
+      }, 100)
     }, 2000)
   }
 
@@ -105,7 +121,7 @@ export function LoginPage() {
           }}
           transition={{
             duration: 8,
-            repeat: Number.POSITIVE_INFINITY,
+            repeat: Infinity,
             ease: "easeInOut",
           }}
         />
@@ -117,7 +133,7 @@ export function LoginPage() {
           }}
           transition={{
             duration: 10,
-            repeat: Number.POSITIVE_INFINITY,
+            repeat: Infinity,
             ease: "easeInOut",
           }}
         />
@@ -276,10 +292,9 @@ export function LoginPage() {
                       disabled={loading}
                       required
                       className={`h-12 pl-10 pr-4 text-base transition-all duration-300 border-2 rounded-xl bg-background
-                        ${
-                          focusedField === "email"
-                            ? "border-primary ring-4 ring-primary/10 shadow-lg shadow-primary/5"
-                            : "border-border hover:border-primary/50"
+                        ${focusedField === "email"
+                          ? "border-primary ring-4 ring-primary/10 shadow-lg shadow-primary/5"
+                          : "border-border hover:border-primary/50"
                         }
                       `}
                     />
@@ -318,10 +333,9 @@ export function LoginPage() {
                       disabled={loading}
                       required
                       className={`h-12 pl-10 pr-12 text-base transition-all duration-300 border-2 rounded-xl bg-background
-                        ${
-                          focusedField === "password"
-                            ? "border-primary ring-4 ring-primary/10 shadow-lg shadow-primary/5"
-                            : "border-border hover:border-primary/50"
+                        ${focusedField === "password"
+                          ? "border-primary ring-4 ring-primary/10 shadow-lg shadow-primary/5"
+                          : "border-border hover:border-primary/50"
                         }
                       `}
                     />

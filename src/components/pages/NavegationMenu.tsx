@@ -92,23 +92,20 @@ const ThemeAwareLogo = () => {
         <img
           src={Logo || "/placeholder.svg"}
           alt="logo polar fix"
-          className={`${
-            isMobile ? "h-8 " : isTablet ? "h-8 " : "h-10 "
-          } w-24 h-full dark:hidden transition-all duration-300`}
+          className={`${isMobile ? "h-8 " : isTablet ? "h-8 " : "h-10 "
+            } w-24 h-full dark:hidden transition-all duration-300`}
         />
         <img
           src={Logo || "/placeholder.svg"}
           alt="logo polar fix"
-          className={`${
-            isMobile ? "h-8" : isTablet ? "h-8" : "h-10"
-          } w-24 h-full hidden dark:block transition-all duration-300`}
+          className={`${isMobile ? "h-8" : isTablet ? "h-8" : "h-10"
+            } w-24 h-full hidden dark:block transition-all duration-300`}
         />
       </div>
       <div className="hidden sm:block lg:block xl:block">
         <h1
-          className={`${
-            isTablet ? "text-lg" : "text-xl"
-          } font-bold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent`}
+          className={`${isTablet ? "text-lg" : "text-xl"
+            } font-bold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent`}
         >
           {/* Título pode ser adicionado aqui se necessário */}
         </h1>
@@ -127,19 +124,16 @@ const ThemeToggle = () => {
       variant="ghost"
       size={isMobile ? "sm" : "sm"}
       onClick={toggleTheme}
-      className={`${
-        isMobile ? "h-8 w-8" : "h-9 w-9"
-      } rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-200 hover:scale-105 active:scale-95`}
+      className={`${isMobile ? "h-8 w-8" : "h-9 w-9"
+        } rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-200 hover:scale-105 active:scale-95`}
     >
       <Sun
-        className={`${
-          isMobile ? "h-3.5 w-3.5" : "h-4 w-4"
-        } rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0`}
+        className={`${isMobile ? "h-3.5 w-3.5" : "h-4 w-4"
+          } rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0`}
       />
       <Moon
-        className={`absolute ${
-          isMobile ? "h-3.5 w-3.5" : "h-4 w-4"
-        } rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100`}
+        className={`absolute ${isMobile ? "h-3.5 w-3.5" : "h-4 w-4"
+          } rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100`}
       />
       <span className="sr-only">Alternar tema</span>
     </Button>
@@ -224,10 +218,17 @@ export function NavegationMenu({
 
   const setDefaultUserData = () => {
     if (authData) {
-      if (authData.firstName && authData.lastName) {
-        setUserLogin(`${authData.firstName} ${authData.lastName}`)
+      if (authData.firstName) {
+        // Usa apenas o firstName se lastName estiver vazio
+        const fullName = authData.lastName
+          ? `${authData.firstName} ${authData.lastName}`
+          : authData.firstName
+        setUserLogin(fullName)
       } else if (authData.email) {
-        setUserLogin(authData.email.split("@")[0])
+        // Extrai e capitaliza o nome do email
+        const emailUsername = authData.email.split("@")[0]
+        const firstName = emailUsername.charAt(0).toUpperCase() + emailUsername.slice(1)
+        setUserLogin(firstName)
       } else if (authData.login) {
         setUserLogin(authData.login)
       }
@@ -388,13 +389,11 @@ export function NavegationMenu({
                   <Link
                     key={item.title}
                     to={item.url}
-                    className={`relative flex items-center gap-2 ${
-                      isLargeScreen ? "px-4 py-2.5" : "px-3 py-2"
-                    } text-sm font-medium rounded-xl transition-all duration-200 whitespace-nowrap ${
-                      isActive
+                    className={`relative flex items-center gap-2 ${isLargeScreen ? "px-4 py-2.5" : "px-3 py-2"
+                      } text-sm font-medium rounded-xl transition-all duration-200 whitespace-nowrap ${isActive
                         ? "bg-gradient-to-bl from-indigo-900 to-slate-900/90 text-white shadow-md transform scale-105"
                         : "text-gray-700 dark:text-gray-200 hover:bg-gray-100/80 dark:hover:bg-gray-800/80 hover:scale-105"
-                    }`}
+                      }`}
                   >
                     <item.icon className={`w-4 h-4 flex-shrink-0 ${isActive ? "animate-pulse" : ""}`} />
                     <span className={isLargeScreen ? "block" : "hidden xl:block"}>{item.title}</span>
@@ -413,9 +412,8 @@ export function NavegationMenu({
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="profile"
-                    className={`flex items-center gap-1 sm:gap-2 ${
-                      isMobile ? "px-2 py-1.5" : "px-3 py-2"
-                    } rounded-xl  transition-all duration-200 hover:scale-105 active:scale-95 min-w-0 `}
+                    className={`flex items-center gap-1 sm:gap-2 ${isMobile ? "px-2 py-1.5" : "px-3 py-2"
+                      } rounded-xl  transition-all duration-200 hover:scale-105 active:scale-95 min-w-0 `}
                   >
                     <div
                       className={`${getAvatarSize()} overflow-hidden rounded-full ring-2 ring-gray-200 dark:ring-gray-700 flex-shrink-0`}
@@ -435,33 +433,28 @@ export function NavegationMenu({
                       </Avatar>
                     </div>
                     <span
-                      className={`hidden sm:block ${
-                        isMobile ? "text-xs" : "text-sm"
-                      } font-medium text-gray-700 dark:text-gray-200 truncate ${
-                        isMobile ? "max-w-16" : isTablet ? "max-w-24" : "max-w-32"
-                      }`}
+                      className={`hidden sm:block ${isMobile ? "text-xs" : "text-sm"
+                        } font-medium text-gray-700 dark:text-gray-200 truncate ${isMobile ? "max-w-16" : isTablet ? "max-w-24" : "max-w-32"
+                        }`}
                     >
                       {userLogin || "Usuário"}
                     </span>
                     <ChevronDown
-                      className={`${
-                        isMobile ? "w-3 h-3" : "w-4 h-4"
-                      } text-gray-500 transition-transform duration-200 hidden sm:block flex-shrink-0`}
+                      className={`${isMobile ? "w-3 h-3" : "w-4 h-4"
+                        } text-gray-500 transition-transform duration-200 hidden sm:block flex-shrink-0`}
                     />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   side="bottom"
                   align="end"
-                  className={`${
-                    isMobile ? "w-64" : isTablet ? "w-68" : "w-72"
-                  } bg-white/95 dark:bg-gray-800/95 backdrop-blur-lg border border-gray-200/50 dark:border-gray-700/50 rounded-xl shadow-xl p-2 mt-2`}
+                  className={`${isMobile ? "w-64" : isTablet ? "w-68" : "w-72"
+                    } bg-white/95 dark:bg-gray-800/95 backdrop-blur-lg border border-gray-200/50 dark:border-gray-700/50 rounded-xl shadow-xl p-2 mt-2`}
                 >
                   {/* Perfil do Usuário */}
                   <DropdownMenuItem
-                    className={`flex items-center gap-3 ${
-                      isMobile ? "p-3" : "p-4"
-                    } rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 dark:hover:from-blue-900/20 dark:hover:to-purple-900/20 cursor-pointer outline-none transition-all duration-200`}
+                    className={`flex items-center gap-3 ${isMobile ? "p-3" : "p-4"
+                      } rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 dark:hover:from-blue-900/20 dark:hover:to-purple-900/20 cursor-pointer outline-none transition-all duration-200`}
                     onClick={openUserProfileModal}
                   >
                     <div
@@ -483,9 +476,8 @@ export function NavegationMenu({
                     </div>
                     <div className="flex flex-col flex-1 min-w-0">
                       <span
-                        className={`${
-                          isMobile ? "text-sm" : "text-base"
-                        } font-semibold text-gray-900 dark:text-gray-100 truncate`}
+                        className={`${isMobile ? "text-sm" : "text-base"
+                          } font-semibold text-gray-900 dark:text-gray-100 truncate`}
                       >
                         {userLogin || "Usuário Desconhecido"}
                       </span>
@@ -493,9 +485,8 @@ export function NavegationMenu({
                         {userEmail}
                       </span>
                       <span
-                        className={`${
-                          isMobile ? "text-xs" : "text-xs"
-                        } text-blue-600 dark:text-blue-400 flex items-center gap-1 mt-1`}
+                        className={`${isMobile ? "text-xs" : "text-xs"
+                          } text-blue-600 dark:text-blue-400 flex items-center gap-1 mt-1`}
                       >
                         Editar Perfil <Edit size={isMobile ? 10 : 12} />
                       </span>
@@ -506,9 +497,8 @@ export function NavegationMenu({
 
                   {/* Alterar Senha */}
                   <DropdownMenuItem
-                    className={`flex items-center gap-3 ${
-                      isMobile ? "p-2.5" : "p-3"
-                    } rounded-lg hover:bg-gray-100/80 dark:hover:bg-gray-700/80 cursor-pointer outline-none transition-all duration-200`}
+                    className={`flex items-center gap-3 ${isMobile ? "p-2.5" : "p-3"
+                      } rounded-lg hover:bg-gray-100/80 dark:hover:bg-gray-700/80 cursor-pointer outline-none transition-all duration-200`}
                     onClick={handlePasswordReset}
                   >
                     <div
@@ -533,14 +523,12 @@ export function NavegationMenu({
                       variant="ghost"
                       onClick={handleLogout}
                       disabled={isLoggingOut}
-                      className={`w-full justify-start gap-3 ${
-                        isMobile ? "p-2.5" : "p-3"
-                      } text-red-600 hover:text-red-700 hover:bg-red-50/80 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200`}
+                      className={`w-full justify-start gap-3 ${isMobile ? "p-2.5" : "p-3"
+                        } text-red-600 hover:text-red-700 hover:bg-red-50/80 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200`}
                     >
                       <div
-                        className={`${
-                          isMobile ? "p-1" : "p-1.5"
-                        } rounded-lg bg-red-100 dark:bg-red-900/30 flex-shrink-0`}
+                        className={`${isMobile ? "p-1" : "p-1.5"
+                          } rounded-lg bg-red-100 dark:bg-red-900/30 flex-shrink-0`}
                       >
                         <LogOut className={`${isMobile ? "w-3.5 h-3.5" : "w-4 h-4"}`} />
                       </div>
@@ -556,9 +544,8 @@ export function NavegationMenu({
               <Button
                 variant="ghost"
                 size="sm"
-                className={`lg:hidden ${
-                  isMobile ? "p-1.5" : "p-2"
-                } rounded-xl hover:bg-gray-100/80 dark:hover:bg-gray-800/80 transition-all duration-200 active:scale-95`}
+                className={`lg:hidden ${isMobile ? "p-1.5" : "p-2"
+                  } rounded-xl hover:bg-gray-100/80 dark:hover:bg-gray-800/80 transition-all duration-200 active:scale-95`}
                 onClick={toggleMobileMenu}
               >
                 {isMobileMenuOpen ? (
@@ -581,19 +568,16 @@ export function NavegationMenu({
                     <Link
                       key={item.title}
                       to={item.url}
-                      className={`relative flex items-center gap-3 ${
-                        isMobile ? "px-3 py-2.5" : "px-4 py-3"
-                      } rounded-xl transition-all duration-200 active:scale-95 ${
-                        isActive
+                      className={`relative flex items-center gap-3 ${isMobile ? "px-3 py-2.5" : "px-4 py-3"
+                        } rounded-xl transition-all duration-200 active:scale-95 ${isActive
                           ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-md transform scale-[1.02]"
                           : "text-gray-700 dark:text-gray-200 hover:bg-gray-100/80 dark:hover:bg-gray-800/80 hover:scale-[1.02]"
-                      }`}
+                        }`}
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
                       <item.icon
-                        className={`${
-                          isMobile ? "w-4 h-4" : "w-5 h-5"
-                        } flex-shrink-0 ${isActive ? "animate-pulse" : ""}`}
+                        className={`${isMobile ? "w-4 h-4" : "w-5 h-5"
+                          } flex-shrink-0 ${isActive ? "animate-pulse" : ""}`}
                       />
                       <span className={`${isMobile ? "text-sm" : "text-base"} font-medium`}>{item.title}</span>
                     </Link>

@@ -79,7 +79,7 @@ export function App() {
   }
 
   return (
-    <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
+    <ThemeProvider defaultTheme="system" storageKey="system">
       <Router>
         {/* 
           Configuração do CookieConsent:
