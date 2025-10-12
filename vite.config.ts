@@ -7,7 +7,7 @@ export default defineConfig(({ mode }) => {
   const isProduction = mode === "production";
 
   return {
-    base: "/", // relativo para Electron, ou "/" para web
+    base: isProduction ? "/portal-nexion/" : "/", 
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
@@ -20,7 +20,7 @@ export default defineConfig(({ mode }) => {
       emptyOutDir: true,
       sourcemap: !isProduction,
       rollupOptions: {
-        input: path.resolve(__dirname, "index.html"), // ✅ correto
+        input: path.resolve(__dirname, "index.html"),
       },
     },
   } as UserConfig;
