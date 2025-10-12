@@ -7,7 +7,7 @@ export default defineConfig(({ mode }) => {
   const isProduction = mode === "production";
 
   return {
-    base: isProduction ? "/portal-nexion/" : "/", 
+    base: "/",  // Mude para "/" em produção (remove o "/portal-nexion/")
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
