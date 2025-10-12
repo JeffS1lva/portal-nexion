@@ -54,14 +54,8 @@ export function BoletoFilter({
   });
   const [isCalendarOpen, setIsCalendarOpen] = React.useState(false);
 
-  // Função para aplicar filtros e chamar onSearch
   const applyFilters = React.useCallback(() => {
     let filteredData = [...allParcelas];
-
-    console.log("=== APLICANDO FILTROS ===");
-    console.log("Tipo de filtro:", filterType);
-    console.log("Valor de busca:", searchValue);
-    console.log("Total de parcelas:", filteredData.length);
 
     if (filterType === "dataVencimento") {
       if (dateRange.start && dateRange.end) {
@@ -116,12 +110,10 @@ export function BoletoFilter({
       onSearch("", filterType);
     }
 
-    console.log("Resultado final:", filteredData.length, "itens");
     setParcelas(filteredData);
     table.setPageIndex(0);
   }, [allParcelas, filterType, searchValue, dateRange, setParcelas, table, onSearch]);
 
-  // Função para resetar todos os filtros
   const handleReset = () => {
     setSearchValue("");
     setFilterType("codigoBoleto");
@@ -131,7 +123,6 @@ export function BoletoFilter({
     onSearch("", "codigoBoleto");
   };
 
-  // Função para aplicar filtro de data
   const handleApplyDateFilter = () => {
     if (dateRange.start && dateRange.end) {
       applyFilters();
@@ -139,20 +130,14 @@ export function BoletoFilter({
     }
   };
 
-  // Efeito principal para aplicar filtros
   React.useEffect(() => {
-    if (filterType === "dataVencimento") {
-      // Para filtro de data, só aplica se o usuário clicar em "Filtrar"
-      return;
-    }
+    if (filterType === "dataVencimento") return;
     const delayDebounce = setTimeout(() => {
       applyFilters();
     }, searchValue ? 300 : 0);
-
     return () => clearTimeout(delayDebounce);
   }, [filterType, searchValue, applyFilters]);
 
-  // Handler para mudança de tipo de filtro
   const handleFilterTypeChange = (value: FilterType) => {
     setFilterType(value);
     setSearchValue("");
@@ -188,7 +173,13 @@ export function BoletoFilter({
   };
 
   return (
-    <div className="space-y-4 py-2">
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        applyFilters();
+      }}
+      className="space-y-4 py-2"
+    >
       <div className="flex flex-col space-y-3 md:flex-row md:items-start md:space-y-0 md:space-x-2">
         {filterType === "dataVencimento" ? (
           <div className="flex flex-col space-y-2 w-full md:flex-row md:flex-1 md:space-y-0 md:space-x-2">
@@ -256,6 +247,12 @@ export function BoletoFilter({
             <Input
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  applyFilters();
+                }
+              }}
               placeholder={getPlaceholder()}
               className="pl-8 w-full"
             />
@@ -263,10 +260,7 @@ export function BoletoFilter({
           </div>
         )}
 
-        <Select
-          value={filterType}
-          onValueChange={handleFilterTypeChange}
-        >
+        <Select value={filterType} onValueChange={handleFilterTypeChange}>
           <SelectTrigger className="w-full md:w-[180px]">
             <SelectValue placeholder="Filtrar por" />
           </SelectTrigger>
@@ -283,6 +277,7 @@ export function BoletoFilter({
         <div className="flex flex-col space-y-2 w-full md:flex-row md:w-auto md:space-y-0 md:space-x-2">
           {filterType === "dataVencimento" ? (
             <Button
+              type="button"
               onClick={handleApplyDateFilter}
               disabled={!dateRange.start || !dateRange.end}
               className="w-full md:w-auto"
@@ -290,15 +285,12 @@ export function BoletoFilter({
               Filtrar
             </Button>
           ) : (
-            <Button
-              onClick={applyFilters}
-              disabled={!searchValue}
-              className="w-full md:w-auto"
-            >
+            <Button type="submit" disabled={!searchValue} className="w-full md:w-auto">
               Filtrar
             </Button>
           )}
           <Button
+            type="button"
             variant="outline"
             onClick={handleReset}
             className="w-full md:w-auto bg-transparent"
@@ -307,6 +299,6 @@ export function BoletoFilter({
           </Button>
         </div>
       </div>
-    </div>
+    </form>
   );
 }

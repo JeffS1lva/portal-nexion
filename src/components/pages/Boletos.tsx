@@ -107,26 +107,15 @@ export const Boletos: React.FC = () => {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
-  const [searchValue, setSearchValue] = useState<string>("");
-  const [searchType] = useState<"codigoPN" | "numNF" | "codigoBoleto">("codigoPN");
-  const [debouncedSearchValue, setDebouncedSearchValue] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [pageSize, setPageSize] = useState<number>(6);
 
   const columns = useBoletosColumns() as ColumnDef<Parcela, any>[];
 
-  // Debounce para busca
+  // Carregar dados fictícios na montagem inicial
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearchValue(searchValue);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [searchValue]);
-
-  // Carregar dados fictícios
-  useEffect(() => {
-    fetchParcelas(debouncedSearchValue);
-  }, [debouncedSearchValue, searchType]);
+    fetchParcelas();
+  }, []);
 
   const table = useReactTable({
     data: parcelas,
@@ -167,38 +156,14 @@ export const Boletos: React.FC = () => {
     },
   });
 
-  const fetchParcelas = async (searchValue: string = "") => {
+  const fetchParcelas = async () => {
     try {
       setLoading(true);
       setError(null);
-      await new Promise((resolve) => setTimeout(resolve, 7000));
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simula atraso
       const mockData = generateMockParcelas(50);
-      let filteredData = mockData;
-
-      if (searchValue) {
-        filteredData = mockData.filter((parcela) => {
-          const searchField = parcela[searchType];
-          return (
-            searchField &&
-            searchField.toString().toLowerCase().includes(searchValue.toLowerCase())
-          );
-        });
-      }
-
-      filteredData.sort((a, b) => {
-        const dateA = a.dataVencimento ? new Date(a.dataVencimento).getTime() : 0;
-        const dateB = b.dataVencimento ? new Date(b.dataVencimento).getTime() : 0;
-        return dateA - dateB;
-      });
-
       setAllParcelas(mockData);
-      setParcelas(filteredData);
-
-      if (filteredData.length === 0) {
-        setError("empty");
-      } else {
-        setError(null);
-      }
+      setParcelas(mockData);
     } catch (err) {
       setError("error");
       setParcelas([]);
@@ -208,18 +173,38 @@ export const Boletos: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    const isNewSearch = searchValue !== debouncedSearchValue;
-    if (searchType === "codigoBoleto") {
-      const numericValue = searchValue.replace(/\D/g, "");
-      table.getColumn(searchType)?.setFilterValue(numericValue);
-    } else if (searchType === "codigoPN" || searchType === "numNF") {
-      table.getColumn(searchType)?.setFilterValue(searchValue);
+  // Manipulador para a busca
+  const handleSearch = (value: string, type: string) => {
+    if (!value) {
+      setParcelas(allParcelas);
+      table.setPageIndex(0);
+      return;
     }
-    if (isNewSearch && searchValue) {
-      setCurrentPage(0);
+
+    let filteredData = [...allParcelas];
+    if (type === "dataVencimento") {
+      const [start, end] = value.split("|").map((date) => new Date(date));
+      filteredData = filteredData.filter((item) => {
+        if (!item.dataVencimento) return false;
+        const itemDate = new Date(item.dataVencimento.split("T")[0]);
+        return itemDate >= start && itemDate <= end;
+      });
+    } else {
+      const lowerValue = value.toLowerCase();
+      filteredData = filteredData.filter((item) => {
+        const field = item[type as keyof Parcela];
+        if (!field) return false;
+        if (type === "codigoBoleto") {
+          const numericValue = lowerValue.replace(/\D/g, "");
+          return field.toString().includes(numericValue);
+        }
+        return field.toString().toLowerCase().includes(lowerValue);
+      });
     }
-  }, [searchValue, searchType, table, debouncedSearchValue]);
+
+    setParcelas(filteredData);
+    table.setPageIndex(0);
+  };
 
   // Skeleton para tabela (desktop)
   const SkeletonTable = () => {
@@ -319,9 +304,7 @@ export const Boletos: React.FC = () => {
         allParcelas={allParcelas}
         setParcelas={setParcelas}
         table={table}
-        onSearch={(value) => {
-          setSearchValue(value);
-        }}
+        onSearch={handleSearch}
       />
 
       {/* Tabela para desktop */}
