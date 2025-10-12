@@ -38,7 +38,6 @@ export function LoginPage() {
     setLoading(true)
 
     setTimeout(() => {
-      // Extrai o nome do email e capitaliza a primeira letra
       const emailUsername = email.split("@")[0]
       const firstName = emailUsername.charAt(0).toUpperCase() + emailUsername.slice(1)
 
@@ -50,20 +49,15 @@ export function LoginPage() {
         token: "mock-token-" + Date.now(),
       }
 
-      // Salva os dados no localStorage
       localStorage.setItem("isAuthenticated", "true")
       localStorage.setItem("authData", JSON.stringify(userData))
       localStorage.setItem("token", userData.token)
 
-      // Dispara evento customizado para notificar o App sobre a mudança de autenticação
       window.dispatchEvent(new Event("authStateChange"))
 
       setLoading(false)
-
-      // Força a navegação para a página inicial
       navigate("/inicio", { replace: true })
 
-      // Fallback: se o navigate não funcionar, força reload
       setTimeout(() => {
         if (window.location.pathname === "/login") {
           window.location.href = "/inicio"
@@ -100,19 +94,19 @@ export function LoginPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Theme toggle */}
-      <div className="absolute top-6 right-6 z-50">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4 sm:p-6 relative overflow-hidden">
+      {/* Theme toggle - Adjusted position for mobile */}
+      <div className="absolute top-4 right-4 z-50 hidden lg:block">
         <ModeToggle />
       </div>
 
-      {/* Animated background grid */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,rgb(var(--color-border))_1px,transparent_1px),linear-gradient(to_bottom,rgb(var(--color-border))_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_50%,#000_70%,transparent_110%)] opacity-20" />
+      {/* Animated background grid - Reduced opacity for mobile */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,rgb(var(--color-border))_1px,transparent_1px),linear-gradient(to_bottom,rgb(var(--color-border))_1px,transparent_1px)] bg-[size:2rem_2rem] sm:bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_50%,#000_70%,transparent_110%)] opacity-10 sm:opacity-20" />
 
-      {/* Gradient orbs */}
+      {/* Gradient orbs - Reduced size and blur for mobile */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div
-          className="absolute top-1/4 -left-48 w-96 h-96 bg-primary/20 dark:bg-primary/10 rounded-full blur-3xl"
+          className="absolute top-1/4 -left-24 sm:-left-48 w-64 sm:w-96 h-64 sm:h-96 bg-primary/20 dark:bg-primary/10 rounded-full blur-2xl sm:blur-3xl"
           animate={{
             scale: [1, 1.2, 1],
             opacity: [0.3, 0.5, 0.3],
@@ -124,7 +118,7 @@ export function LoginPage() {
           }}
         />
         <motion.div
-          className="absolute bottom-1/4 -right-48 w-96 h-96 bg-cyan-500/20 dark:bg-cyan-500/10 rounded-full blur-3xl"
+          className="absolute bottom-1/4 -right-24 sm:-right-48 w-64 sm:w-96 h-64 sm:h-96 bg-cyan-500/20 dark:bg-cyan-500/10 rounded-full blur-2xl sm:blur-3xl"
           animate={{
             scale: [1.2, 1, 1.2],
             opacity: [0.2, 0.4, 0.2],
@@ -137,15 +131,14 @@ export function LoginPage() {
         />
       </div>
 
-      <div className="w-full max-w-7xl grid lg:grid-cols-2 gap-12 items-center relative z-10">
-        {/* Left side - Branding and features */}
+      <div className="w-full max-w-7xl grid lg:grid-cols-2 gap-6 sm:gap-12 items-center relative z-10">
+        {/* Left side - Branding and features, hidden on mobile */}
         <motion.div
           initial={{ opacity: 0, x: -50 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6 }}
-          className="hidden lg:block space-y-10"
+          className="hidden lg:block space-y-8"
         >
-          {/* Logo and title */}
           <div className="space-y-6">
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
@@ -156,22 +149,21 @@ export function LoginPage() {
               <div className="p-2 bg-primary/10 rounded-xl">
                 <Package className="h-6 w-6 text-primary" />
               </div>
-              <span className="text-xl font-bold text-foreground">Portal de Gestão</span>
+              <span className="text-xl font-bold text-foreground">Portal Nexion</span>
             </motion.div>
 
-            <h1 className="text-5xl lg:text-6xl font-bold text-foreground leading-tight text-balance">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground leading-tight text-balance">
               Gerencie seu negócio com{" "}
               <span className="bg-gradient-to-r from-primary via-cyan-400 to-primary bg-clip-text text-transparent">
                 inteligência
               </span>
             </h1>
 
-            <p className="text-xl text-muted-foreground leading-relaxed text-pretty max-w-xl">
+            <p className="text-lg sm:text-xl text-muted-foreground leading-relaxed text-pretty max-w-xl">
               Plataforma completa para controle de pedidos, boletos e rastreamento de entregas em tempo real.
             </p>
           </div>
 
-          {/* Features grid */}
           <div className="grid grid-cols-2 gap-4">
             {features.map((feature, index) => (
               <motion.div
@@ -195,7 +187,6 @@ export function LoginPage() {
             ))}
           </div>
 
-          {/* Stats */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -242,8 +233,7 @@ export function LoginPage() {
           className="w-full max-w-md mx-auto"
         >
           <Card className="backdrop-blur-xl bg-card/80 border-2 border-border shadow-2xl">
-            <CardHeader className="space-y-4 text-center pb-6">
-              {/* Mobile logo */}
+            <CardHeader className="space-y-4 text-center pb-4 sm:pb-6">
               <div className="lg:hidden flex justify-center mb-2">
                 <div className="inline-flex items-center gap-2 px-4 py-2 bg-card/50 backdrop-blur-sm rounded-xl border border-border">
                   <Package className="h-5 w-5 text-primary" />
@@ -261,15 +251,14 @@ export function LoginPage() {
                 <span className="text-sm font-semibold text-primary">Bem-vindo de volta</span>
               </motion.div>
 
-              <CardTitle className="text-3xl font-bold text-foreground">Fazer Login</CardTitle>
-              <CardDescription className="text-base text-muted-foreground text-pretty">
+              <CardTitle className="text-2xl sm:text-3xl font-bold text-foreground">Fazer Login</CardTitle>
+              <CardDescription className="text-sm sm:text-base text-muted-foreground text-pretty">
                 Acesse sua conta para gerenciar pedidos e boletos
               </CardDescription>
             </CardHeader>
 
-            <CardContent className="space-y-6">
-              <form onSubmit={handleLogin} className="space-y-5">
-                {/* Email field */}
+            <CardContent className="space-y-5 sm:space-y-6">
+              <form onSubmit={handleLogin} className="space-y-4 sm:space-y-5">
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-sm font-medium flex items-center gap-2 text-foreground">
                     <Mail className="h-4 w-4 text-primary" />
@@ -289,7 +278,7 @@ export function LoginPage() {
                       onChange={(e) => setEmail(e.target.value)}
                       disabled={loading}
                       required
-                      className={`h-12 pl-10 pr-4 text-base transition-all duration-300 border-2 rounded-xl bg-background
+                      className={`h-12 sm:h-14 pl-10 pr-4 text-base transition-all duration-300 border-2 rounded-xl bg-background
                         ${focusedField === "email"
                           ? "border-primary ring-4 ring-primary/10 shadow-lg shadow-primary/5"
                           : "border-border hover:border-primary/50"
@@ -300,20 +289,28 @@ export function LoginPage() {
                   </motion.div>
                 </div>
 
-                {/* Password field */}
                 <div className="space-y-2">
-                  <div className="flex justify-between items-center">
+                  <div className="flex justify-between items-center relative">
                     <Label htmlFor="password" className="text-sm font-medium flex items-center gap-2 text-foreground">
                       <Lock className="h-4 w-4 text-primary" />
                       Senha
                     </Label>
-                    <Button
-                      variant="link"
-                      className="px-0 h-auto text-sm font-normal text-primary hover:text-primary/80"
-                      type="button"
-                    >
-                      Esqueceu a senha?
-                    </Button>
+                    <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }} className="relative">
+                      <Button
+                        variant="link"
+                        className="px-0 bg-zinc-500/30 p-2.5 border-2 border-zinc-700 h-auto text-sm font-normal text-primary hover:text-primary/80 opacity-60 cursor-not-allowed"
+                        type="button"
+                        onClick={handlePremiumClick}
+                        disabled
+                      >
+                        Esqueceu a senha?
+                      </Button>
+                      {/* Premium badge */}
+                      <div className="absolute -top-2 -right-2 bg-premium text-premium-foreground px-2 sm:px-3 py-1 rounded-full text-xs font-bold shadow-lg flex items-center gap-1">
+                        <Crown className="h-3 w-3" />
+                        PREMIUM
+                      </div>
+                    </motion.div>
                   </div>
 
                   <motion.div
@@ -330,12 +327,12 @@ export function LoginPage() {
                       onChange={(e) => setPassword(e.target.value)}
                       disabled={loading}
                       required
-                      className={`h-12 pl-10 pr-12 text-base transition-all duration-300 border-2 rounded-xl bg-background
-                        ${focusedField === "password"
+                      className={`h-12 sm:h-14 pl-10 pr-12 text-base transition-all duration-300 border-2 rounded-xl bg-background
+                      ${focusedField === "password"
                           ? "border-primary ring-4 ring-primary/10 shadow-lg shadow-primary/5"
                           : "border-border hover:border-primary/50"
                         }
-                      `}
+                    `}
                     />
                     <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                     <Button
@@ -350,11 +347,10 @@ export function LoginPage() {
                   </motion.div>
                 </div>
 
-                {/* Login button */}
                 <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }} className="w-full pt-2">
                   <Button
                     type="submit"
-                    className="w-full h-12 text-base font-semibold rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300 relative overflow-hidden group"
+                    className="w-full h-12 sm:h-14 text-base font-semibold rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300 relative overflow-hidden group"
                     disabled={loading}
                   >
                     {loading ? (
@@ -373,7 +369,6 @@ export function LoginPage() {
                 </motion.div>
               </form>
 
-              {/* Divider */}
               <div className="relative py-2">
                 <div className="absolute inset-0 flex items-center">
                   <div className="w-full border-t border-border"></div>
@@ -383,12 +378,11 @@ export function LoginPage() {
                 </div>
               </div>
 
-              {/* Request access button - PREMIUM LOCKED */}
               <div className="relative">
                 <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
                   <Button
                     variant="outline"
-                    className="w-full h-12 text-base font-medium rounded-xl border-2 border-border hover:bg-muted/50 bg-background relative overflow-hidden group opacity-60 cursor-not-allowed"
+                    className="w-full h-12 sm:h-14 text-base font-medium rounded-xl border-2 border-border hover:bg-muted/50 bg-background relative overflow-hidden group opacity-60 cursor-not-allowed"
                     type="button"
                     onClick={handlePremiumClick}
                     disabled
@@ -401,15 +395,13 @@ export function LoginPage() {
                   </Button>
                 </motion.div>
 
-                {/* Premium badge */}
-                <div className="absolute -top-2 -right-2 bg-premium text-premium-foreground px-3 py-1 rounded-full text-xs font-bold shadow-lg flex items-center gap-1">
+                <div className="absolute -top-2 -right-2 bg-premium text-premium-foreground px-2 sm:px-3 py-1 rounded-full text-xs font-bold shadow-lg flex items-center gap-1">
                   <Crown className="h-3 w-3" />
                   PREMIUM
                 </div>
               </div>
 
-              {/* Premium info text */}
-              <p className="text-xs text-center text-muted-foreground text-pretty">
+              <p className="text-xs sm:text-sm text-center text-muted-foreground text-pretty">
                 O cadastro de novos usuários está disponível apenas no plano Premium.{" "}
                 <button
                   onClick={handlePremiumClick}
@@ -419,7 +411,6 @@ export function LoginPage() {
                 </button>
               </p>
 
-              {/* Mobile features */}
               <div className="lg:hidden grid grid-cols-2 gap-3 pt-2">
                 {features.slice(0, 4).map((feature) => (
                   <div
@@ -436,11 +427,10 @@ export function LoginPage() {
         </motion.div>
       </div>
 
-      {/* Premium Modal */}
+      {/* Premium Modal - Fullscreen on mobile */}
       <AnimatePresence>
         {showPremiumModal && (
           <>
-            {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -449,17 +439,16 @@ export function LoginPage() {
               className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
             />
 
-            {/* Modal */}
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               transition={{ type: "spring", duration: 0.5 }}
-              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+              className="fixed inset-0 sm:inset-4 z-50 flex items-center justify-center p-4 sm:p-0"
               onClick={() => setShowPremiumModal(false)}
             >
               <Card
-                className="w-full max-w-md bg-card border-2 border-border shadow-2xl"
+                className="w-full max-w-md h-full sm:h-auto bg-card border-2 border-border shadow-2xl"
                 onClick={(e) => e.stopPropagation()}
               >
                 <CardHeader className="relative pb-4">
@@ -474,17 +463,17 @@ export function LoginPage() {
 
                   <div className="flex justify-center mb-4">
                     <div className="p-4 bg-premium/10 rounded-2xl">
-                      <Crown className="h-12 w-12 text-premium" />
+                      <Crown className="h-10 sm:h-12 w-10 sm:w-12 text-premium" />
                     </div>
                   </div>
 
-                  <CardTitle className="text-2xl font-bold text-center text-foreground">Recurso Premium</CardTitle>
-                  <CardDescription className="text-center text-base text-muted-foreground text-pretty">
+                  <CardTitle className="text-xl sm:text-2xl font-bold text-center text-foreground">Recurso Premium</CardTitle>
+                  <CardDescription className="text-center text-sm sm:text-base text-muted-foreground text-pretty">
                     Desbloqueie todo o potencial da plataforma
                   </CardDescription>
                 </CardHeader>
 
-                <CardContent className="space-y-6">
+                <CardContent className="space-y-5 sm:space-y-6">
                   <div className="space-y-3">
                     <div className="flex items-start gap-3 p-3 rounded-xl bg-muted/50">
                       <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
@@ -512,7 +501,7 @@ export function LoginPage() {
                   </div>
 
                   <div className="pt-2 space-y-3">
-                    <Button className="w-full h-12 text-base font-semibold rounded-xl bg-premium hover:bg-premium/90 text-premium-foreground shadow-lg">
+                    <Button className="w-full h-12 sm:h-14 text-base font-semibold rounded-xl bg-premium hover:bg-premium/90 text-premium-foreground shadow-lg">
                       <Crown className="h-4 w-4 mr-2" />
                       Fazer Upgrade para Premium
                     </Button>

@@ -18,7 +18,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CalendarIcon, Search, X } from "lucide-react";
 import { Table } from "@tanstack/react-table";
-import { Parcela } from '@/types/parcela';
+import { Parcela } from "@/types/parcela";
 
 interface DateRange {
   start: Date | null;
@@ -44,6 +44,7 @@ export function BoletoFilter({
   allParcelas,
   setParcelas,
   table,
+  onSearch,
 }: BoletoFilterProps) {
   const [filterType, setFilterType] = React.useState<FilterType>("codigoBoleto");
   const [searchValue, setSearchValue] = React.useState<string>("");
@@ -53,30 +54,35 @@ export function BoletoFilter({
   });
   const [isCalendarOpen, setIsCalendarOpen] = React.useState(false);
 
-  // Função centralizada para aplicar todos os filtros
+  // Função para aplicar filtros e chamar onSearch
   const applyFilters = React.useCallback(() => {
     let filteredData = [...allParcelas];
 
-    console.log('=== APLICANDO FILTROS ===');
-    console.log('Tipo de filtro:', filterType);
-    console.log('Valor de busca:', searchValue);
-    console.log('Total de parcelas:', filteredData.length);
+    console.log("=== APLICANDO FILTROS ===");
+    console.log("Tipo de filtro:", filterType);
+    console.log("Valor de busca:", searchValue);
+    console.log("Total de parcelas:", filteredData.length);
 
-    // Filtros específicos por tipo
     if (filterType === "dataVencimento") {
       if (dateRange.start && dateRange.end) {
+        const formattedRange = `${format(dateRange.start, "yyyy-MM-dd")}|${format(
+          dateRange.end,
+          "yyyy-MM-dd"
+        )}`;
+        onSearch(formattedRange, filterType);
         filteredData = filteredData.filter((item) => {
           if (!item.dataVencimento) return false;
           const datePart = item.dataVencimento.split("T")[0];
           const [year, month, day] = datePart.split("-").map(Number);
           const itemDate = new Date(Date.UTC(year, month - 1, day));
-
           return itemDate >= dateRange.start! && itemDate <= dateRange.end!;
         });
+      } else {
+        onSearch("", filterType);
       }
     } else if (searchValue.trim()) {
       const value = searchValue.toLowerCase().trim();
-
+      onSearch(value, filterType);
       switch (filterType) {
         case "codigoBoleto":
           const numericValue = value.replace(/\D/g, "");
@@ -102,59 +108,56 @@ export function BoletoFilter({
           break;
         case "pedidosCompra":
           filteredData = filteredData.filter((item) =>
-            item.pedidosCompra?.toLocaleLowerCase().includes(value)
-        );
+            item.pedidosCompra?.toLowerCase().includes(value)
+          );
           break;
       }
+    } else {
+      onSearch("", filterType);
     }
 
-    console.log('Resultado final:', filteredData.length, 'itens');
+    console.log("Resultado final:", filteredData.length, "itens");
     setParcelas(filteredData);
     table.setPageIndex(0);
-  }, [
-    allParcelas,
-    filterType,
-    searchValue,
-    dateRange,
-    setParcelas,
-    table,
-  ]);
+  }, [allParcelas, filterType, searchValue, dateRange, setParcelas, table, onSearch]);
 
   // Função para resetar todos os filtros
-  const resetFilters = () => {
+  const handleReset = () => {
     setSearchValue("");
     setFilterType("codigoBoleto");
     setDateRange({ start: null, end: null });
     setParcelas(allParcelas);
     table.setPageIndex(0);
+    onSearch("", "codigoBoleto");
   };
 
-  // Efeito principal que aplica filtros sempre que qualquer filtro muda
+  // Função para aplicar filtro de data
+  const handleApplyDateFilter = () => {
+    if (dateRange.start && dateRange.end) {
+      applyFilters();
+      setIsCalendarOpen(false);
+    }
+  };
+
+  // Efeito principal para aplicar filtros
   React.useEffect(() => {
     if (filterType === "dataVencimento") {
-      // Para filtro de data, só aplica se tiver ambas as datas
-      if (dateRange.start && dateRange.end) {
-        applyFilters();
-      } else if (!dateRange.start && !dateRange.end) {
-        // Se limpar as datas, aplica os outros filtros
-        applyFilters();
-      }
-    } else {
-      // Para outros tipos de filtro, aplica com debounce no searchValue
-      const delayDebounce = setTimeout(() => {
-        applyFilters();
-      }, searchValue ? 300 : 0); // Sem delay se não há busca
-
-      return () => clearTimeout(delayDebounce);
+      // Para filtro de data, só aplica se o usuário clicar em "Filtrar"
+      return;
     }
-  }, [filterType, searchValue, dateRange, applyFilters]);
+    const delayDebounce = setTimeout(() => {
+      applyFilters();
+    }, searchValue ? 300 : 0);
+
+    return () => clearTimeout(delayDebounce);
+  }, [filterType, searchValue, applyFilters]);
 
   // Handler para mudança de tipo de filtro
   const handleFilterTypeChange = (value: FilterType) => {
     setFilterType(value);
     setSearchValue("");
     setDateRange({ start: null, end: null });
-
+    onSearch("", value);
     if (value === "dataVencimento") {
       setIsCalendarOpen(true);
     }
@@ -185,103 +188,123 @@ export function BoletoFilter({
   };
 
   return (
-    <div className="flex flex-col gap-4 pt-4 pb-2">
-      <div className="flex items-center gap-2">
-        <div className="flex items-center flex-1 gap-2">
-          {filterType === "dataVencimento" ? (
-            <div className="flex-1">
-              <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
-                <PopoverTrigger asChild>
+    <div className="space-y-4 py-2">
+      <div className="flex flex-col space-y-3 md:flex-row md:items-start md:space-y-0 md:space-x-2">
+        {filterType === "dataVencimento" ? (
+          <div className="flex flex-col space-y-2 w-full md:flex-row md:flex-1 md:space-y-0 md:space-x-2">
+            <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="w-full md:flex-1 justify-start text-left font-normal bg-transparent"
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {dateRange.start && dateRange.end ? (
+                    <>
+                      {formatDateSafely(dateRange.start)} -{" "}
+                      {formatDateSafely(dateRange.end)}
+                    </>
+                  ) : (
+                    "Selecione o período de vencimento"
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="range"
+                  selected={{
+                    from: dateRange.start || undefined,
+                    to: dateRange.end || undefined,
+                  }}
+                  onSelect={(range) => {
+                    if (range?.from && range?.to) {
+                      const endDate = new Date(range.to);
+                      endDate.setHours(23, 59, 59, 999);
+                      setDateRange({
+                        start: range.from,
+                        end: endDate,
+                      });
+                    } else {
+                      setDateRange({
+                        start: range?.from || null,
+                        end: range?.to || null,
+                      });
+                    }
+                  }}
+                  locale={ptBR}
+                  initialFocus
+                />
+                <div className="p-2 border-t flex justify-end">
                   <Button
-                    variant="outline"
-                    className="w-full justify-start text-left font-normal"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setDateRange({ start: null, end: null });
+                      setIsCalendarOpen(false);
+                      onSearch("", filterType);
+                    }}
                   >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {dateRange.start && dateRange.end ? (
-                      <>
-                        {formatDateSafely(dateRange.start)} {" - "}
-                        {formatDateSafely(dateRange.end)}
-                      </>
-                    ) : (
-                      "Selecione o período de vencimento"
-                    )}
+                    <X className="mr-2 h-4 w-4" />
+                    Limpar
                   </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="range"
-                    selected={{
-                      from: dateRange.start || undefined,
-                      to: dateRange.end || undefined,
-                    }}
-                    onSelect={(range) => {
-                      if (range?.from && range?.to) {
-                        const endDate = new Date(range.to);
-                        endDate.setHours(23, 59, 59, 999);
-                        setDateRange({
-                          start: range.from,
-                          end: endDate,
-                        });
-                        setIsCalendarOpen(false);
-                      } else {
-                        setDateRange({
-                          start: range?.from || null,
-                          end: range?.to || null,
-                        });
-                      }
-                    }}
-                    locale={ptBR}
-                    initialFocus
-                  />
-                  <div className="p-2 border-t flex justify-end">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setDateRange({ start: null, end: null });
-                        setIsCalendarOpen(false);
-                      }}
-                    >
-                      <X className="mr-2 h-4 w-4" />
-                      Limpar
-                    </Button>
-                  </div>
-                </PopoverContent>
-              </Popover>
-            </div>
-          ) : (
-            <div className="relative flex-1">
-              <Input
-                value={searchValue}
-                onChange={(e) => setSearchValue(e.target.value)}
-                placeholder={getPlaceholder()}
-                className="pl-8"
-              />
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
-            </div>
-          )}
-
-          <div className="flex items-center gap-2">
-            <Select
-              value={filterType}
-              onValueChange={handleFilterTypeChange}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filtrar por" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="codigoBoleto">Código</SelectItem>
-                <SelectItem value="pedidosCompra">Pedidos de Compra</SelectItem>
-                <SelectItem value="nomePN">Nome</SelectItem>
-                <SelectItem value="cnpj">CNPJ</SelectItem>
-                <SelectItem value="numNF">NF</SelectItem>
-                <SelectItem value="dataVencimento">Vencimento</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button variant="outline" onClick={resetFilters}>
-              Limpar filtros
-            </Button>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
+        ) : (
+          <div className="relative w-full md:flex-1">
+            <Input
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
+              placeholder={getPlaceholder()}
+              className="pl-8 w-full"
+            />
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
+          </div>
+        )}
+
+        <Select
+          value={filterType}
+          onValueChange={handleFilterTypeChange}
+        >
+          <SelectTrigger className="w-full md:w-[180px]">
+            <SelectValue placeholder="Filtrar por" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="codigoBoleto">Código</SelectItem>
+            <SelectItem value="pedidosCompra">Pedidos de Compra</SelectItem>
+            <SelectItem value="nomePN">Nome</SelectItem>
+            <SelectItem value="cnpj">CNPJ</SelectItem>
+            <SelectItem value="numNF">NF</SelectItem>
+            <SelectItem value="dataVencimento">Vencimento</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <div className="flex flex-col space-y-2 w-full md:flex-row md:w-auto md:space-y-0 md:space-x-2">
+          {filterType === "dataVencimento" ? (
+            <Button
+              onClick={handleApplyDateFilter}
+              disabled={!dateRange.start || !dateRange.end}
+              className="w-full md:w-auto"
+            >
+              Filtrar
+            </Button>
+          ) : (
+            <Button
+              onClick={applyFilters}
+              disabled={!searchValue}
+              className="w-full md:w-auto"
+            >
+              Filtrar
+            </Button>
+          )}
+          <Button
+            variant="outline"
+            onClick={handleReset}
+            className="w-full md:w-auto bg-transparent"
+          >
+            Limpar
+          </Button>
         </div>
       </div>
     </div>

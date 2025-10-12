@@ -1,12 +1,10 @@
 import { useState, useEffect, type ReactNode } from "react";
 import {
   Clock,
-  
   Headphones,
   MessageCircle,
   Calendar,
   Sparkles,
-        
   Search,
   FileText,
   AlertTriangle,
@@ -25,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import React from "react";
 import { useNavigate } from "react-router-dom";
+
 
 // Interfaces
 interface Pedido {
@@ -61,7 +60,6 @@ interface SupportStep {
   isCompleted: boolean;
 }
 
-// Status possíveis do suporte para a timeline
 type SupportStatus =
   | "ticket_criado"
   | "atribuido_suporte"
@@ -95,7 +93,7 @@ const generateFictionalPedidos = (): Pedido[] => {
     "Consultor Salesforce",
     "Equipe Interna",
     "Suporte IBM",
-    null, // Alguns tickets sem atribuição inicial
+    null,
     "Analista SAP",
   ];
 
@@ -106,52 +104,35 @@ const generateFictionalPedidos = (): Pedido[] => {
   const pedidos: Pedido[] = [];
 
   for (let i = 1; i <= 100; i++) {
-    // Datas mais realistas para tickets de suporte
     const dataLancamento = new Date();
-    dataLancamento.setDate(
-      dataLancamento.getDate() - Math.floor(Math.random() * 365)
-    );
+    dataLancamento.setDate(dataLancamento.getDate() - Math.floor(Math.random() * 365));
 
     const dataResolucao = new Date(dataLancamento);
-    dataResolucao.setDate(dataResolucao.getDate() + Math.floor(Math.random() * 30) + 1); // Resolução em até 31 dias
+    dataResolucao.setDate(dataResolucao.getDate() + Math.floor(Math.random() * 30) + 1);
 
     const dataAtualizacao = new Date(dataLancamento);
-    dataAtualizacao.setDate(dataAtualizacao.getDate() + Math.floor(Math.random() * 7) + 1); // Atualização em até 8 dias
+    dataAtualizacao.setDate(dataAtualizacao.getDate() + Math.floor(Math.random() * 7) + 1);
 
-    // Gerar ID interno realista
-    const chaveNFe = `${Math.floor(
-      Math.random() * 100000000000000000000000000000000000000000000
-    )}`.padStart(44, "0");
+    const chaveNFe = `${Math.floor(Math.random() * 100000000000000000000000000000000000000000000)}`.padStart(44, "0");
 
     const parceiro = parceiros[Math.floor(Math.random() * parceiros.length)];
-    const statusNotaFiscal =
-      statusesNotaFiscal[Math.floor(Math.random() * statusesNotaFiscal.length)];
+    const statusNotaFiscal = statusesNotaFiscal[Math.floor(Math.random() * statusesNotaFiscal.length)];
 
     pedidos.push({
       grupo: grupos[Math.floor(Math.random() * grupos.length)],
       filial: filiais[Math.floor(Math.random() * filiais.length)],
-      codigoTransportadora: parceiro
-        ? `T${String(Math.floor(Math.random() * 999)).padStart(3, "0")}`
-        : "",
+      codigoTransportadora: parceiro ? `T${String(Math.floor(Math.random() * 999)).padStart(3, "0")}` : "",
       nomeTransportadora: parceiro,
       estado: estados[Math.floor(Math.random() * estados.length)],
-      codigoDoCliente: `CLI${String(Math.floor(Math.random() * 9999)).padStart(
-        4,
-        "0"
-      )}`,
+      codigoDoCliente: `CLI${String(Math.floor(Math.random() * 9999)).padStart(4, "0")}`,
       nomeCliente: nomes[Math.floor(Math.random() * nomes.length)],
-      numeroPedido: `TICK${String(i).padStart(6, "0")}`, // Ticket em vez de licença
+      numeroPedido: `TICK${String(i).padStart(6, "0")}`,
       dataLancamentoPedido: format(dataLancamento, "yyyy-MM-dd"),
-      dataParaEntrega: format(dataResolucao, "yyyy-MM-dd"), // Data prevista de resolução
-      statusDoPedido:
-        statusesPedido[Math.floor(Math.random() * statusesPedido.length)],
-      dataPicking: format(dataAtualizacao, "yyyy-MM-dd"), // Data de última atualização
-      statusPicking:
-        statusesPicking[Math.floor(Math.random() * statusesPicking.length)],
-      notaFiscal: `ID${String(Math.floor(Math.random() * 999999)).padStart(
-        6,
-        "0"
-      )}`, // ID do ticket
+      dataParaEntrega: format(dataResolucao, "yyyy-MM-dd"),
+      statusDoPedido: statusesPedido[Math.floor(Math.random() * statusesPedido.length)],
+      dataPicking: format(dataAtualizacao, "yyyy-MM-dd"),
+      statusPicking: statusesPicking[Math.floor(Math.random() * statusesPicking.length)],
+      notaFiscal: `ID${String(Math.floor(Math.random() * 999999)).padStart(6, "0")}`,
       chaveNFe: chaveNFe,
       statusNotaFiscal: statusNotaFiscal,
     });
@@ -164,40 +145,30 @@ const generateFictionalPedidos = (): Pedido[] => {
   );
 };
 
-// Componente principal
 const PedidosTruck = () => {
-  // Estados
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [allPedidos, setAllPedidos] = useState<Pedido[]>([]);
   const [selectedPedido, setSelectedPedido] = useState<Pedido | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeDateRange, setActiveDateRange] = useState<DateRange>({
-    start: new Date(new Date().setDate(new Date().getDate() - 30)), // Último mês
+    start: new Date(new Date().setDate(new Date().getDate() - 30)),
     end: new Date(),
   });
   const [searchTerm, setSearchTerm] = useState("");
   const [, setStatusFilter] = useState<string | null>(null);
-  const [supportStatus, setSupportStatus] =
-    useState<SupportStatus>("ticket_criado");
+  const [supportStatus, setSupportStatus] = useState<SupportStatus>("ticket_criado");
   const navigate = useNavigate();
 
-  // Efeito para carregar dados iniciais
   useEffect(() => {
     const fetchInitialData = async () => {
       const fictionalData = generateFictionalPedidos();
       setAllPedidos(fictionalData);
-      await fetchPedidosWithDateRange(
-        activeDateRange.start,
-        activeDateRange.end,
-        fictionalData
-      );
+      await fetchPedidosWithDateRange(activeDateRange.start, activeDateRange.end, fictionalData);
     };
-
     fetchInitialData();
   }, []);
 
-  // Efeito para selecionar o primeiro pedido quando a lista é carregada
   useEffect(() => {
     if (pedidos.length > 0 && !selectedPedido) {
       setSelectedPedido(pedidos[0]);
@@ -205,12 +176,9 @@ const PedidosTruck = () => {
     }
   }, [pedidos]);
 
-  // Determina o status do suporte baseado nas datas disponíveis
   const determineSupportStatus = (pedido: Pedido) => {
     const hoje = new Date();
     const dataResolucao = new Date(pedido.dataParaEntrega);
-
-    // Lógica adaptada para suporte: criação, análise, resolução
     if (pedido.statusDoPedido === "Resolvido" || dataResolucao < hoje) {
       setSupportStatus("resolvido");
     } else if (pedido.statusDoPedido === "Em Análise") {
@@ -224,22 +192,13 @@ const PedidosTruck = () => {
 
   React.useEffect(() => {
     const token = localStorage.getItem("token");
-
     if (!token) {
       localStorage.removeItem("token");
       navigate("/login");
       return;
     }
-
-    // Removido isTokenExpired pois não há API, mas mantido para compatibilidade
-    // if (isTokenExpired(token)) {
-    //   localStorage.removeItem("token");
-    //   navigate("/login");
-    //   return;
-    // }
   }, [navigate]);
 
-  // Buscar pedidos da API -> Agora filtra dados fictícios
   const fetchPedidosWithDateRange = async (
     startDate: Date,
     endDate: Date,
@@ -248,27 +207,16 @@ const PedidosTruck = () => {
     try {
       setLoading(true);
       setError(null);
-
-      // Simula delay de carregamento de 2 segundos
       await new Promise((resolve) => setTimeout(resolve, 5000));
-
-      // Guardar as datas atuais de filtro
-      setActiveDateRange({
-        start: startDate,
-        end: endDate,
-      });
-
-      // Filtrar por range de datas
+      setActiveDateRange({ start: startDate, end: endDate });
       const pedidosData = allData.filter((pedido) => {
         const pedidoDate = new Date(pedido.dataLancamentoPedido);
         return pedidoDate >= startDate && pedidoDate <= endDate;
       });
 
       if (Array.isArray(pedidosData)) {
-        // Certifique-se de que todos os pedidos tenham as propriedades necessárias
         const processedData = pedidosData.map((pedido) => ({
           ...pedido,
-          // Garante que todas as propriedades usadas na busca estejam presentes
           numeroPedido: pedido.numeroPedido || "",
           nomeCliente: pedido.nomeCliente || "",
           notaFiscal: pedido.notaFiscal || "",
@@ -276,36 +224,20 @@ const PedidosTruck = () => {
           codigoDoCliente: pedido.codigoDoCliente || "",
         }));
 
-        // Ordenação decrescente por data de lançamento
         processedData.sort(
-          (
-            a: { dataLancamentoPedido: any },
-            b: { dataLancamentoPedido: any }
-          ) => {
-            if (!a.dataLancamentoPedido || !b.dataLancamentoPedido) {
-              return 0;
-            }
-            // Garantir que estamos trabalhando com strings antes de usar split
+          (a, b) => {
+            if (!a.dataLancamentoPedido || !b.dataLancamentoPedido) return 0;
             const dataStrA = String(a.dataLancamentoPedido);
             const dataStrB = String(b.dataLancamentoPedido);
-            // Criar objeto Date usando split para evitar problemas de timezone
             const [yearA, monthA, dayA] = dataStrA.split("-");
             const [yearB, monthB, dayB] = dataStrB.split("-");
-            const dataA = new Date(
-              Number(yearA),
-              Number(monthA) - 1,
-              Number(dayA)
-            ).getTime();
-            const dataB = new Date(
-              Number(yearB),
-              Number(monthB) - 1,
-              Number(dayB)
-            ).getTime();
-            return dataB - dataA; // Ordem decrescente
+            const dataA = new Date(Number(yearA), Number(monthA) - 1, Number(dayA)).getTime();
+            const dataB = new Date(Number(yearB), Number(monthB) - 1, Number(dayB)).getTime();
+            return dataB - dataA;
           }
         );
 
-        setAllPedidos(allData); // AllPedidos permanece com todos os dados fictícios
+        setAllPedidos(allData);
         setPedidos(processedData);
       } else {
         setAllPedidos([]);
@@ -320,27 +252,20 @@ const PedidosTruck = () => {
     }
   };
 
-  // Filtrar pedidos por termo de busca
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const term = e.target.value.toLowerCase().trim();
     setSearchTerm(term);
-
     if (!term) {
       setPedidos(allPedidos);
       return;
     }
 
     const filtered = allPedidos.filter((pedido) => {
-      // Garante que todos os campos sejam tratados como strings ou valores vazios
       const numeroPedido = String(pedido.numeroPedido || "").toLowerCase();
       const nomeCliente = String(pedido.nomeCliente || "").toLowerCase();
       const notaFiscal = String(pedido.notaFiscal || "").toLowerCase();
       const chaveNFe = String(pedido.chaveNFe || "").toLowerCase();
-      const codigoDoCliente = String(
-        pedido.codigoDoCliente || ""
-      ).toLowerCase();
-
-      // Verifica se algum dos campos corresponde exatamente ou contém o termo de busca
+      const codigoDoCliente = String(pedido.codigoDoCliente || "").toLowerCase();
       return (
         numeroPedido === term ||
         numeroPedido.includes(term) ||
@@ -352,21 +277,15 @@ const PedidosTruck = () => {
     });
 
     setPedidos(filtered);
-
-    // Atualiza o pedido selecionado se não estiver nos resultados filtrados
-    if (
-      selectedPedido &&
-      !filtered.some((p) => p.numeroPedido === selectedPedido.numeroPedido)
-    ) {
+    if (selectedPedido && !filtered.some((p) => p.numeroPedido === selectedPedido.numeroPedido)) {
       setSelectedPedido(filtered.length > 0 ? filtered[0] : null);
     }
   };
 
-  // Métodos para formatar datas
   const formatDate = (dateString: string) => {
     try {
       const date = parseISO(dateString);
-      return format(date, "dd/MM/yyyy ", { locale: ptBR });
+      return format(date, "dd/MM/yyyy", { locale: ptBR });
     } catch {
       return "Data indisponível";
     }
@@ -381,28 +300,26 @@ const PedidosTruck = () => {
     }
   };
 
-  // Determina os passos com base no status atual
-  const getSupportSteps = (
-    status: SupportStatus,
-    pedido: Pedido
-  ): SupportStep[] => {
+  const getSupportSteps = (status: SupportStatus, pedido: Pedido): SupportStep[] => {
     const formatAnaliseDescription = (): React.ReactNode => {
       return (
         <>
           Seu ticket está sendo analisado pela equipe de suporte.
-          <Card className="bg-slate-200 dark:bg-sidebar-accent mt-10">
-            <CardContent>
-              <div className="flex gap-3 text-red-600 dark:text-red-500">
-                <BadgeAlert />
+          <Card className="bg-slate-200 dark:bg-sidebar-accent mt-6 sm:mt-10">
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex gap-2 sm:gap-3 text-red-600 dark:text-red-500">
+                <span className="icon-wrapper w-4 h-4 sm:w-5 sm:h-5">
+                  <BadgeAlert size={14} />
+                </span>
                 <div>
-                  <p className="inline">
+                  <p className="inline text-xs sm:text-sm">
                     Caso precise de mais informações ou atualizações, entre em{" "}
                   </p>
                   <Dialog>
                     <DialogTrigger asChild>
                       <Button
                         variant={"bottomTrucker"}
-                        className="border-0 p-0 h-auto inline"
+                        className="border-0 p-0 h-auto inline text-xs sm:text-sm"
                       >
                         <a
                           href="https://mail.google.com/mail/?view=cm&fs=1&to=suporte@software.com&cc=suporte@software.com&su=Dúvida%20sobre%20Ticket%20de%20Suporte&body=Olá%20equipe%20de%20Suporte%2C%0A%0AGostaria%20de%20obter%20informações%20sobre%20o%20meu%20ticket.%0A%0ADados%20do%20ticket%3A%0A-%20Número%20do%20ticket%3A%0A-%20Data%20de%20abertura%3A%0A%0AFico%20no%20aguardo%20do%20retorno.%0A%0AAtenciosamente%2C%0A"
@@ -429,36 +346,24 @@ const PedidosTruck = () => {
         id: "ticket_criado",
         label: "Ticket Criado",
         description: "Seu ticket de suporte foi registrado e está na fila inicial",
-        icon: <MessageCircle size={22} />,
-        date: pedido.dataLancamentoPedido
-          ? formatDate(pedido.dataLancamentoPedido)
-          : undefined,
+        icon: <span className="icon-wrapper w-4 h-4 sm:w-5 sm:h-5"><MessageCircle size={14} /></span>,
+        date: pedido.dataLancamentoPedido ? formatDate(pedido.dataLancamentoPedido) : undefined,
         isActive: status === "ticket_criado",
-        isCompleted: [
-          "ticket_criado",
-          "atribuido_suporte",
-          "em_analise",
-          "resolvido",
-        ].includes(status),
+        isCompleted: ["ticket_criado", "atribuido_suporte", "em_analise", "resolvido"].includes(status),
       },
       {
         id: "atribuido_suporte",
         label: "Atribuído ao Suporte",
-        description:
-          "Seu ticket foi atribuído a um técnico especializado",
-        icon: <UserCheck size={22} />,
+        description: "Seu ticket foi atribuído a um técnico especializado",
+        icon: <span className="icon-wrapper w-4 h-4 sm:w-5 sm:h-5"><UserCheck size={14} /></span>,
         isActive: status === "atribuido_suporte",
-        isCompleted: [
-          "atribuido_suporte",
-          "em_analise",
-          "resolvido",
-        ].includes(status),
+        isCompleted: ["atribuido_suporte", "em_analise", "resolvido"].includes(status),
       },
       {
         id: "em_analise",
         label: "Análise em Andamento",
         description: formatAnaliseDescription(),
-        icon: <Zap size={22} />,
+        icon: <span className="icon-wrapper w-4 h-4 sm:w-5 sm:h-5"><Zap size={14} /></span>,
         isActive: status === "em_analise",
         isCompleted: ["em_analise", "resolvido"].includes(status),
       },
@@ -466,24 +371,15 @@ const PedidosTruck = () => {
         id: "resolvido",
         label: "Resolvido",
         description: "Seu ticket foi resolvido com sucesso",
-        icon: <Headphones size={22} />,
-        date: pedido.dataParaEntrega
-          ? formatDate(pedido.dataParaEntrega)
-          : undefined,
+        icon: <span className="icon-wrapper w-4 h-4 sm:w-5 sm:h-5"><Headphones size={14} /></span>,
+        date: pedido.dataParaEntrega ? formatDate(pedido.dataParaEntrega) : undefined,
         isActive: status === "resolvido",
         isCompleted: true,
       },
     ];
   };
 
-  // Componente para badges de status
-  const StatusBadge = ({
-    text,
-    type,
-  }: {
-    text: string;
-    type: "success" | "info" | "pending" | "default" | "warning";
-  }) => {
+  const StatusBadge = ({ text, type }: { text: string; type: "success" | "info" | "pending" | "default" | "warning" }) => {
     const styles = {
       success: "bg-green-100 text-green-800 border-green-200",
       info: "bg-blue-100 text-blue-800 border-blue-200",
@@ -491,36 +387,26 @@ const PedidosTruck = () => {
       warning: "bg-orange-100 text-orange-800 border-orange-200",
       default: "bg-gray-100 text-gray-800 border-gray-200",
     };
-
     return (
       <span
-        className={`${styles[type]} text-xs font-semibold px-3 py-1 rounded-full border`}
+        className={`${styles[type]} text-xs sm:text-sm font-semibold px-2 sm:px-3 py-1 rounded-full border touch-target`}
       >
         {text}
       </span>
     );
   };
 
-  // Componente para itens de informação
-  const InfoItem = ({
-    label,
-    value,
-    icon,
-  }: {
-    label: string;
-    value: string;
-    icon: React.ReactNode;
-  }) => {
+  const InfoItem = ({ label, value, icon }: { label: string; value: string; icon: React.ReactNode }) => {
     return (
-      <div className="flex items-center gap-3 bg-gray-50 p-3 rounded-lg hover:bg-gray-100 transition-colors dark:bg-sidebar dark:border">
-        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-white shadow-sm text-blue-600 ">
+      <div className="flex items-center gap-2 sm:gap-3 bg-gray-50 p-2 sm:p-3 rounded-lg hover:bg-gray-100 transition-colors dark:bg-sidebar dark:border">
+        <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white shadow-sm text-blue-600">
           {icon}
         </div>
         <div>
           <div className="text-xs uppercase tracking-wider text-gray-500 font-medium dark:text-gray-500">
             {label}
           </div>
-          <div className="font-semibold text-gray-900 dark:text-gray-300">
+          <div className="font-semibold text-sm sm:text-base text-gray-900 dark:text-gray-300 truncate">
             {value}
           </div>
         </div>
@@ -528,17 +414,7 @@ const PedidosTruck = () => {
     );
   };
 
-  // Componente para cada pedido na lista
-  const PedidoListItem = ({
-    pedido,
-    isSelected,
-    onClick,
-  }: {
-    pedido: Pedido;
-    isSelected: boolean;
-    onClick: () => void;
-  }) => {
-    // Determina o status visual do pedido
+  const PedidoListItem = React.memo(({ pedido, isSelected, onClick }: { pedido: Pedido; isSelected: boolean; onClick: () => void }) => {
     const getStatusInfo = (pedido: Pedido) => {
       if (pedido.statusDoPedido === "Resolvido") {
         return { text: "Resolvido", type: "success" as const };
@@ -550,30 +426,29 @@ const PedidosTruck = () => {
         return { text: "Novo", type: "default" as const };
       }
     };
-
     const status = getStatusInfo(pedido);
 
     return (
       <div
-        className={`p-4 border-b border-gray-100 dark:border-gray-700 cursor-pointer transition-all hover:bg-zinc-50 dark:hover:bg-sidebar-accent ${
-          isSelected
-            ? "bg-zinc-100 border-l-4 border-l-blue-500 dark:bg-sidebar-accent dark:border-l-blue-500"
-            : ""
+        className={`p-3 sm:p-4 border-b border-gray-100 dark:border-gray-700 cursor-pointer transition-all hover:bg-zinc-50 dark:hover:bg-sidebar-accent touch-target ${
+          isSelected ? "bg-zinc-100 border-l-4 border-l-blue-500 dark:bg-sidebar-accent dark:border-l-blue-500" : ""
         }`}
         onClick={onClick}
+        role="listitem"
+        aria-selected={isSelected}
       >
         <div className="flex justify-between items-start mb-2">
           <div>
-            <div className="font-medium text-gray-900 dark:text-zinc-100">
+            <div className="font-medium text-sm sm:text-base text-gray-900 dark:text-zinc-100 truncate">
               Ticket: {pedido.numeroPedido}
             </div>
             <div>
               {pedido.notaFiscal ? (
-                <span className="flex text-md font-medium text-gray-900 dark:text-zinc-100">
+                <span className="flex text-sm font-medium text-gray-900 dark:text-zinc-100">
                   ID: #{pedido.notaFiscal}
                 </span>
               ) : (
-                <span className="flex text-sm font-medium text-red-500 bg-red-100 px-2 mt-1 rounded-sm">
+                <span className="flex text-xs sm:text-sm font-medium text-red-500 bg-red-100 px-2 mt-1 rounded-sm">
                   ID ainda não gerado
                 </span>
               )}
@@ -581,148 +456,140 @@ const PedidosTruck = () => {
           </div>
           <StatusBadge text={status.text} type={status.type} />
         </div>
-
-        <div className="text-sm text-gray-700 dark:text-gray-600 mb-1">
+        <div className="text-xs sm:text-sm text-gray-700 dark:text-gray-600 mb-1 truncate">
           {pedido.nomeCliente}
         </div>
-
-        <div className="flex justify-between items-center mt-2 text-xs text-gray-500">
+        <div className="flex justify-between items-center mt-2 text-xs sm:text-sm text-gray-500">
           <div className="flex items-center gap-1">
-            <Calendar size={12} />
+            <span className="icon-wrapper w-3 h-3 sm:w-4 sm:h-4">
+              <Calendar size={12} />
+            </span>
             {formatDateOnly(pedido.dataLancamentoPedido)}
           </div>
           <div className="flex items-center gap-1">
-            <ChevronRight
-              size={16}
-              className="text-blue-500 dark:text-gray-500"
-            />
+            <span className="icon-wrapper w-4 h-4 sm:w-5 sm:h-5">
+              <ChevronRight size={14} />
+            </span>
           </div>
         </div>
       </div>
     );
-  };
+  });
 
-  // Componente para o estado vazio
   const EmptyState = () => (
-    <div className="flex flex-col items-center justify-center h-64 p-6 text-center">
-      <Headphones size={48} className="text-gray-300 mb-4" />
-      <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-600 mb-2">
+    <div className="flex flex-col items-center justify-center h-64 p-4 sm:p-6 text-center">
+      <span className="icon-wrapper w-9 h-9 sm:w-12 sm:h-12">
+        <Headphones size={36} />
+      </span>
+      <h3 className="text-base sm:text-lg font-semibold text-gray-700 dark:text-gray-600 mb-2">
         Nenhum ticket encontrado
       </h3>
-      <p className="text-gray-500 max-w-md">
-        Não encontramos tickets de suporte com esses dados. Tente buscar pelo
-        número do Ticket, ID ou Nome do Cliente.
+      <p className="text-sm text-gray-500 max-w-xs sm:max-w-md">
+        Não encontramos tickets de suporte com esses dados. Tente buscar pelo número do Ticket, ID ou Nome do Cliente.
       </p>
       <button
-        className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700 transition-colors"
+        className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700 transition-colors touch-target"
         onClick={() => {
           setSearchTerm("");
           setStatusFilter(null);
           setPedidos(allPedidos);
         }}
+        aria-label="Tentar novamente"
       >
-        <RefreshCw size={14} />
+        <span className="icon-wrapper w-3 h-3 sm:w-4 sm:h-4">
+          <RefreshCw size={12} />
+        </span>
         Tentar novamente
       </button>
     </div>
   );
 
-  // Componente para o estado de erro
   const ErrorState = () => (
-    <div className="flex flex-col items-center justify-center h-64 p-6 text-center">
-      <AlertTriangle size={48} className="text-red-500 mb-4" />
-      <h3 className="text-lg font-semibold text-gray-700 mb-2">
+    <div className="flex flex-col items-center justify-center h-64 p-4 sm:p-6 text-center">
+      <span className="icon-wrapper w-9 h-9 sm:w-12 sm:h-12">
+        <AlertTriangle size={36} />
+      </span>
+      <h3 className="text-base sm:text-lg font-semibold text-gray-700 mb-2">
         Erro ao carregar tickets
       </h3>
-      <p className="text-gray-500 max-w-md">
-        Ocorreu um erro ao tentar carregar os tickets de suporte. Por favor, tente
-        novamente mais tarde.
+      <p className="text-sm text-gray-500 max-w-xs sm:max-w-md">
+        Ocorreu um erro ao tentar carregar os tickets de suporte. Por favor, tente novamente mais tarde.
       </p>
       <button
-        className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700 transition-colors"
-        onClick={() =>
-          fetchPedidosWithDateRange(
-            activeDateRange.start,
-            activeDateRange.end,
-            allPedidos
-          )
-        }
+        className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700 transition-colors touch-target"
+        onClick={() => fetchPedidosWithDateRange(activeDateRange.start, activeDateRange.end, allPedidos)}
+        aria-label="Tentar novamente"
       >
-        <RefreshCw size={14} />
+        <span className="icon-wrapper w-3 h-3 sm:w-4 sm:h-4">
+          <RefreshCw size={12} />
+        </span>
         Tentar novamente
       </button>
     </div>
   );
 
-  // Skeleton para a lista de pedidos
   const SkeletonList = () => (
     <div className="divide-y divide-gray-100">
       {[...Array(5)].map((_, index) => (
-        <div key={index} className="p-4">
+        <div key={index} className="p-3 sm:p-4">
           <div className="flex justify-between items-start mb-2">
             <div>
-              <Skeleton className="h-5 w-32 mb-2" />
-              <Skeleton className="h-4 w-48" />
+              <Skeleton className="h-4 sm:h-5 w-24 sm:w-32 mb-2" />
+              <Skeleton className="h-3 sm:h-4 w-32 sm:w-48" />
             </div>
-            <Skeleton className="h-6 w-20 rounded-full" />
+            <Skeleton className="h-5 sm:h-6 w-16 sm:w-20 rounded-full" />
           </div>
-          <Skeleton className="h-4 w-64 mb-2" />
+          <Skeleton className="h-3 sm:h-4 w-48 sm:w-64 mb-2" />
           <div className="flex justify-between items-center mt-2">
-            <Skeleton className="h-3 w-24" />
-            <Skeleton className="h-3 w-16" />
+            <Skeleton className="h-3 w-20 sm:w-24" />
+            <Skeleton className="h-3 w-12 sm:w-16" />
           </div>
         </div>
       ))}
     </div>
   );
 
-  // Skeleton para detalhes
   const SkeletonDetails = () => (
-    <div className="space-y-6">
-      {/* Info resumidas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="grid grid-cols-1 gap-3 sm:gap-4">
         {[...Array(2)].map((_, i) => (
-          <div key={i} className="flex items-center gap-3  p-3 rounded-lg">
-            <Skeleton className="h-10 w-10 rounded-full" />
+          <div key={i} className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg">
+            <Skeleton className="h-8 sm:h-10 w-8 sm:w-10 rounded-full" />
             <div>
               <Skeleton className="h-3 w-16 mb-1" />
-              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-4 w-24 sm:w-32" />
             </div>
           </div>
         ))}
       </div>
-
-      {/* Timeline */}
       <div className="w-full relative">
         <div className="flex flex-col relative z-10">
           {[...Array(3)].map((_, index) => (
-            <div key={index} className="mb-8 flex flex-col items-start">
-              <Skeleton className="h-20 w-20 rounded-full" />
+            <div key={index} className="mb-6 sm:mb-8 flex flex-col items-start">
+              <Skeleton className="h-16 sm:h-20 w-16 sm:w-20 rounded-full" />
               <div className="ml-2 mt-4 flex-1">
-                <Skeleton className="h-4 w-24 mb-1" />
-                <Skeleton className="h-3 w-64 mb-2" />
-                <Skeleton className="h-3 w-32" />
+                <Skeleton className="h-4 w-20 sm:w-24 mb-1" />
+                <Skeleton className="h-3 w-48 sm:w-64 mb-2" />
+                <Skeleton className="h-3 w-24 sm:w-32" />
               </div>
             </div>
           ))}
         </div>
       </div>
-
-      {/* Detalhes */}
-      <div className="bg-white dark:bg-sidebar dark:border-accent rounded-xl shadow-lg p-6 border border-gray-100">
-        <Skeleton className="h-6 w-48 mb-5" />
-        <div className="space-y-6">
+      <div className="bg-white dark:bg-sidebar dark:border-accent rounded-xl shadow-lg p-4 sm:p-6 border border-gray-100">
+        <Skeleton className="h-5 sm:h-6 w-32 sm:w-48 mb-4 sm:mb-5" />
+        <div className="space-y-4 sm:space-y-6">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="space-y-3">
-              <Skeleton className="h-4 w-24" />
+            <div key={i} className="space-y-2 sm:space-y-3">
+              <Skeleton className="h-4 w-20 sm:w-24" />
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <Skeleton className="h-3 w-20" />
-                  <Skeleton className="h-3 w-16" />
+                  <Skeleton className="h-3 w-16 sm:w-20" />
+                  <Skeleton className="h-3 w-12 sm:w-16" />
                 </div>
                 <div className="flex justify-between">
-                  <Skeleton className="h-3 w-16" />
-                  <Skeleton className="h-6 w-20 rounded-full" />
+                  <Skeleton className="h-3 w-12 sm:w-16" />
+                  <Skeleton className="h-5 sm:h-6 w-16 sm:w-20 rounded-full" />
                 </div>
               </div>
             </div>
@@ -734,20 +601,16 @@ const PedidosTruck = () => {
 
   if (loading) {
     return (
-      <div className="w-full mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-          {/* Skeleton para lista */}
-          <div className="md:col-span-4  dark:bg-sidebar dark:border rounded-xl shadow-lg overflow-hidden h-6/10">
-            <Skeleton className="h-24 w-full" /> {/* Header */}
-            <Skeleton className="h-12 w-full mx-4 my-4 rounded-lg" />{" "}
-            {/* Search */}
+      <div className="w-full mx-auto px-2 sm:px-4">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-6">
+          <div className="md:col-span-4 bg-white dark:bg-sidebar dark:border rounded-xl shadow-lg overflow-hidden">
+            <Skeleton className="h-20 sm:h-24 w-full" />
+            <Skeleton className="h-10 sm:h-12 w-[calc(100%-2rem)] mx-4 my-3 sm:my-4 rounded-lg" />
             <SkeletonList />
           </div>
-
-          {/* Skeleton para detalhes */}
-          <div className="md:col-span-8 ">
-            <div className="w-full  rounded-xl shadow-xl overflow-hidden">
-              <Skeleton className="h-24 w-full" />
+          <div className="md:col-span-8">
+            <div className="w-full rounded-xl shadow-xl overflow-hidden">
+              <Skeleton className="h-20 sm:h-24 w-full" />
               <SkeletonDetails />
             </div>
           </div>
@@ -756,24 +619,24 @@ const PedidosTruck = () => {
     );
   }
 
-  // Caso não haja um pedido selecionado, mostra apenas a lista de pedidos
   if (!selectedPedido) {
     return (
-      <div className="w-full max-w-4xl mx-auto bg-white dark:bg-sidebar dark:border rounded-xl shadow-lg overflow-hidden ">
-        <div className="w-full bg-gradient-to-r from-sky-800 to-zinc-900  py-6 px-8">
-          <h2 className="text-white text-2xl font-bold flex items-center gap-2">
-            <Headphones size={20} className="text-blue-200" />
+      <div className="w-full max-w-4xl mx-auto bg-white dark:bg-sidebar dark:border rounded-xl shadow-lg overflow-hidden">
+        <div className="w-full bg-gradient-to-r from-sky-800 to-zinc-900 py-4 sm:py-6 px-4 sm:px-8">
+          <h2 className="text-white text-lg sm:text-2xl font-bold flex items-center gap-2">
+            <span className="icon-wrapper w-4 h-4 sm:w-5 sm:h-5">
+              <Headphones size={16} />
+            </span>
             Meus Tickets de Suporte
           </h2>
         </div>
-
         {error ? (
           <ErrorState />
         ) : pedidos.length === 0 ? (
           <EmptyState />
         ) : (
           <div className="p-4">
-            <p className="text-gray-700">
+            <p className="text-sm sm:text-base text-gray-700 dark:text-gray-600">
               Selecione um ticket para visualizar o processo de suporte.
             </p>
           </div>
@@ -782,56 +645,50 @@ const PedidosTruck = () => {
     );
   }
 
-  // Obter os passos de suporte para o pedido selecionado
   const steps = getSupportSteps(supportStatus, selectedPedido);
 
   return (
-    <div className="w-full  mx-auto">
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-        {/* Coluna da lista de pedidos */}
-        <div className="md:col-span-4 bg-white dark:bg-sidebar dark:border rounded-xl shadow-lg overflow-hidden h-6/10 ">
-          <div className="w-full bg-gradient-to-r from-sky-800 to-zinc-900 dark:bg-gradient-to-r dark:from-sky-900 dark:to-zinc-900 py-4 px-6">
-            <h2 className="text-white text-xl font-bold flex items-center gap-2 ">
-              <Headphones size={18} className="text-blue-200" />
+    <div className="w-full mx-auto px-2 sm:px-4">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-6">
+        <div className="md:col-span-4 bg-white dark:bg-sidebar dark:border rounded-xl shadow-lg overflow-hidden">
+          <div className="w-full bg-gradient-to-r from-sky-800 to-zinc-900 dark:from-sky-900 dark:to-zinc-900 py-3 sm:py-4 px-4 sm:px-6">
+            <h2 className="text-white text-base sm:text-xl font-bold flex items-center gap-2">
+              <span className="icon-wrapper w-4 h-4 sm:w-5 sm:h-5">
+                <Headphones size={14} />
+              </span>
               Meus Tickets
             </h2>
-            <p className="text-blue-100 text-sm mt-1">
+            <p className="text-blue-100 text-xs sm:text-sm mt-1">
               {pedidos.length} tickets encontrados
             </p>
           </div>
-
-          {/* Barra de pesquisa */}
-          <div className="p-4 border-b dark:border-b-gray-700 border-gray-200">
+          <div className="p-3 sm:p-4 border-b dark:border-b-gray-700 border-gray-200">
             <div className="relative">
-              <Search
-                className="absolute left-3 top-3 text-gray-400"
-                size={16}
-              />
+              <span className="absolute left-3 top-2.5 sm:top-3 text-gray-400 icon-wrapper w-4 h-4 sm:w-5 sm:h-5">
+                <Search size={14} />
+              </span>
               <input
                 type="text"
                 placeholder="Busque seus tickets..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-accent dark:focus:ring-border"
+                className="w-full pl-8 sm:pl-10 pr-3 sm:pr-4 py-1.5 sm:py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-accent dark:focus:ring-border text-sm sm:text-base touch-target"
                 value={searchTerm}
                 onChange={handleSearch}
+                aria-label="Buscar tickets"
               />
             </div>
           </div>
-
-          {/* Lista de pedidos */}
-          <div className="h-full overflow-y-auto scrollbar  max-h-screen ">
+          <div className="overflow-y-auto scrollbar max-h-[calc(100vh-12rem)] sm:max-h-[calc(100vh-14rem)]">
             {error ? (
               <ErrorState />
             ) : pedidos.length === 0 ? (
               <EmptyState />
             ) : (
-              <div className="divide-y divide-gray-100">
+              <div className="divide-y divide-gray-100" role="list">
                 {pedidos.map((pedido, index) => (
                   <PedidoListItem
                     key={`${pedido.numeroPedido}-${index}`}
                     pedido={pedido}
-                    isSelected={
-                      selectedPedido?.numeroPedido === pedido.numeroPedido
-                    }
+                    isSelected={selectedPedido?.numeroPedido === pedido.numeroPedido}
                     onClick={() => {
                       setSelectedPedido(pedido);
                       determineSupportStatus(pedido);
@@ -842,110 +699,89 @@ const PedidosTruck = () => {
             )}
           </div>
         </div>
-
-        {/* Coluna dos detalhes do pedido */}
         <div className="md:col-span-8">
           <div className="w-full bg-gradient-to-b from-white to-gray-50 rounded-xl shadow-xl overflow-hidden">
-            {/* Cabeçalho com gradiente */}
-            <div className="w-full bg-gradient-to-r from-sky-800 to-slate-900 dark:bg-gradient-to-r dark:from-sky-900 dark:to-slate-900 py-6 px-8">
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
+            <div className="w-full bg-gradient-to-r from-sky-800 to-slate-900 dark:from-sky-900 dark:to-slate-900 py-4 sm:py-6 px-4 sm:px-8">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
                 <div>
-                  <h2 className="text-white text-2xl font-bold flex items-center gap-2">
-                    <Sparkles size={20} className="text-blue-200" />
+                  <h2 className="text-white text-lg sm:text-2xl font-bold flex items-center gap-2">
+                    <span className="icon-wrapper w-4 h-4 sm:w-5 sm:h-5">
+                      <Sparkles size={16} />
+                    </span>
                     Processo de Suporte
                   </h2>
-                  <p className="text-blue-100 mt-1">
+                  <p className="text-blue-100 text-sm sm:text-base mt-1">
                     Ticket #{selectedPedido.numeroPedido}
                   </p>
                   <p className="text-blue-100">
                     {selectedPedido.notaFiscal ? (
                       `ID #${selectedPedido.notaFiscal}`
                     ) : (
-                      <span className="flex items-center text-sm font-medium text-red-500 bg-red-200 rounded-sm p-1 w-full max-w-60 mt-1 gap-1">
-                        <BadgeAlert size={18} />
+                      <span className="flex items-center text-xs sm:text-sm font-medium text-red-500 bg-red-200 rounded-sm p-1 w-full max-w-48 sm:max-w-60 mt-1 gap-1">
+                        <span className="icon-wrapper w-4 h-4 sm:w-5 sm:h-5">
+                          <BadgeAlert size={14} />
+                        </span>
                         ID ainda não gerado
                       </span>
                     )}
                   </p>
                 </div>
-                <div className="mt-3 md:mt-0">
+                <div className="mt-2 sm:mt-0">
                   <StatusBadge
                     text={
-                      supportStatus === "resolvido"
-                        ? "Resolvido"
-                        : supportStatus === "em_analise"
-                        ? "Em Análise"
-                        : supportStatus === "atribuido_suporte"
-                        ? "Atribuído"
-                        : "Criado"
+                      supportStatus === "resolvido" ? "Resolvido" :
+                      supportStatus === "em_analise" ? "Em Análise" :
+                      supportStatus === "atribuido_suporte" ? "Atribuído" : "Criado"
                     }
                     type={
-                      supportStatus === "resolvido"
-                        ? "success"
-                        : supportStatus === "em_analise"
-                        ? "info"
-                        : supportStatus === "atribuido_suporte"
-                        ? "pending"
-                        : "default"
+                      supportStatus === "resolvido" ? "success" :
+                      supportStatus === "em_analise" ? "info" :
+                      supportStatus === "atribuido_suporte" ? "pending" : "default"
                     }
                   />
                 </div>
               </div>
             </div>
-
-            {/* Informações resumidas do pedido */}
-            <div className="p-6 bg-white border-b border-gray-100 dark:bg-sidebar dark:border-b-accent">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ">
+            <div className="p-4 sm:p-6 bg-white border-b border-gray-100 dark:bg-sidebar dark:border-b-accent">
+              <div className="grid grid-cols-1 gap-3 sm:gap-4">
                 <InfoItem
                   label="Cliente"
                   value={selectedPedido.nomeCliente}
-                  icon={<MessageCircle size={18} />}
+                  icon={<span className="icon-wrapper w-4 h-4 sm:w-5 sm:h-5"><MessageCircle size={14} /></span>}
                 />
                 <InfoItem
                   label="Técnico Atribuído"
                   value={selectedPedido.nomeTransportadora || "Pendente Atribuição"}
-                  icon={<Headphones size={18} className="w-12" />}
+                  icon={<span className="icon-wrapper w-4 h-4 sm:w-5 sm:h-5"><Headphones size={14} /></span>}
                 />
               </div>
             </div>
-
-            {/* Container para timeline e detalhes */}
-            <div className="flex flex-col dark:bg-sidebar dark:border gap-6 p-8">
-              {/* Timeline de status */}
-              <div className="w-full   relative">
-                <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-6 flex items-center gap-2">
-                  <Clock size={18} className="text-blue-600 " />
+            <div className="flex flex-col dark:bg-sidebar dark:border gap-4 sm:gap-6 p-4 sm:p-8">
+              <div className="w-full relative">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4 sm:mb-6 flex items-center gap-2">
+                  <span className="icon-wrapper w-4 h-4 sm:w-5 sm:h-5">
+                    <Clock size={14} />
+                  </span>
                   Progresso do Suporte
                 </h3>
-
-                {/* Linha conectora */}
-                <div className="absolute left-10 top-16  w-1 bg-gradient-to-b from-blue-100 to-green-100 rounded-full -translate-x-1/2 z-0"></div>
-
-                {/* Passos */}
+                <div className="absolute timeline-connector left-8 sm:left-10 top-12 sm:top-16 w-1 bg-gradient-to-b from-blue-100 to-green-100 rounded-full -translate-x-1/2 z-0"></div>
                 <div className="flex flex-col relative z-10">
                   {steps.map((step, index) => (
-                    <div key={step.id} className="mb-8 last:mb-0 relative">
-                      {/* Linha conectando os passos (exceto o último) */}
+                    <div key={step.id} className="mb-6 sm:mb-8 last:mb-0 relative timeline-step">
                       {index < steps.length - 1 && (
-                        <div className="absolute top-10 left-20 right-0 h-1 bg-gray-200 overflow-hidden ">
+                        <div className="absolute top-8 sm:top-10 left-16 sm:left-20 right-0 h-1 bg-gray-200 overflow-hidden">
                           <div
-                            className={`h-full ${
-                              step.isCompleted ? "bg-green-500" : "bg-gray-300"
-                            } transition-all duration-500 ease-in-out`}
+                            className={`h-full ${step.isCompleted ? "bg-green-500" : "bg-gray-300"} transition-all duration-500 ease-in-out`}
                             style={{
                               width: step.isCompleted ? "100%" : "0%",
-                              background: step.isCompleted
-                                ? "linear-gradient(to right, #4ade80, #22d3ee)"
-                                : "#e5e7eb",
+                              background: step.isCompleted ? "linear-gradient(to right, #4ade80, #22d3ee)" : "#e5e7eb",
                             }}
                           ></div>
                         </div>
                       )}
-
                       <div className="flex flex-col items-start">
-                        {/* Ícone do passo */}
                         <div
-                          className={`flex items-center justify-center w-20 h-20 rounded-full shrink-0 border-4 shadow-md transition-all duration-300 relative z-10 ${
+                          className={`flex items-center justify-center timeline-icon w-16 sm:w-20 h-16 sm:h-20 rounded-full shrink-0 border-4 shadow-md transition-all duration-300 relative z-10 ${
                             step.isCompleted
                               ? "bg-gradient-to-br from-green-400 to-green-600 border-green-300 text-white"
                               : step.isActive
@@ -955,34 +791,26 @@ const PedidosTruck = () => {
                         >
                           {step.icon}
                         </div>
-
-                        {/* Informações do passo */}
-                        <div className="ml-2 mt-4 flex-1">
+                        <div className="ml-2 mt-3 sm:mt-4 flex-1">
                           <h3
-                            className={`font-semibold text-sm ${
-                              step.isActive
-                                ? "text-blue-700"
-                                : step.isCompleted
-                                ? "text-green-700"
-                                : "text-gray-500"
+                            className={`font-semibold text-sm sm:text-base ${
+                              step.isActive ? "text-blue-700" : step.isCompleted ? "text-green-700" : "text-gray-500"
                             }`}
                           >
                             {step.label}
                           </h3>
-
                           <p
-                            className={`mt-1 ${
-                              step.isActive || step.isCompleted
-                                ? "text-gray-700 dark:text-gray-600"
-                                : "text-gray-500"
+                            className={`mt-1 text-sm sm:text-base ${
+                              step.isActive || step.isCompleted ? "text-gray-700 dark:text-gray-600" : "text-gray-500"
                             }`}
                           >
                             {step.description}
                           </p>
-
                           {step.date && (
-                            <p className="text-sm text-gray-500 mt-2 flex items-center">
-                              <Clock size={14} className="mr-1" />
+                            <p className="text-xs sm:text-sm text-gray-500 mt-2 flex items-center">
+                              <span className="icon-wrapper w-3 h-3 sm:w-4 sm:h-4">
+                                <Clock size={12} />
+                              </span>
                               {step.date}
                             </p>
                           )}
@@ -992,102 +820,70 @@ const PedidosTruck = () => {
                   ))}
                 </div>
               </div>
-
-              {/* Detalhes do pedido */}
-              <div className="w-full ">
-                <div className="bg-white dark:bg-sidebar dark:border-accent rounded-xl shadow-lg p-6 h-full border border-gray-100">
-                  <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-5 flex items-center gap-2">
-                    <FileText size={18} className="text-blue-600" />
+              <div className="w-full">
+                <div className="bg-white dark:bg-sidebar dark:border-accent rounded-xl shadow-lg p-4 sm:p-6 border border-gray-100">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4 sm:mb-5 flex items-center gap-2">
+                    <span className="icon-wrapper w-4 h-4 sm:w-5 sm:h-5">
+                      <FileText size={14} />
+                    </span>
                     Detalhes do Ticket
                   </h3>
-
-                  <div className="space-y-6">
-                    {/* Bloco de datas */}
-                    <div className="bg-blue-50 dark:bg-sidebar dark:border rounded-lg p-4 border border-blue-100">
-                      <h4 className="text-sm font-medium text-blue-800 dark:text-gray-100 mb-3 flex items-center gap-2">
-                        <Calendar size={14} className="text-blue-600" />
+                  <div className="space-y-4 sm:space-y-6">
+                    <div className="bg-blue-50 dark:bg-sidebar dark:border rounded-lg p-3 sm:p-4 border border-blue-100">
+                      <h4 className="text-sm font-medium text-blue-800 dark:text-gray-100 mb-2 sm:mb-3 flex items-center gap-2">
+                        <span className="icon-wrapper w-3 h-3 sm:w-4 sm:h-4">
+                          <Calendar size={12} />
+                        </span>
                         Cronograma
                       </h4>
-                      <div className="space-y-3">
-                        <div className="flex justify-between items-center">
-                          <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-500">
-                            <Calendar size={16} className="text-blue-600" />
+                      <div className="space-y-2 sm:space-y-3">
+                        <div className="flex justify-between items-center text-sm">
+                          <div className="flex items-center gap-2 text-gray-700 dark:text-gray-500">
+                            <span className="icon-wrapper w-3 h-3 sm:w-4 sm:h-4">
+                              <Calendar size={12} />
+                            </span>
                             Ticket Criado:
                           </div>
-                          <span className="font-medium">
-                            {formatDate(selectedPedido.dataLancamentoPedido)}
-                          </span>
+                          <span className="font-medium">{formatDate(selectedPedido.dataLancamentoPedido)}</span>
                         </div>
-
-                        <div className="flex justify-between items-center">
-                          <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-500">
-                            <Zap size={16} className="text-blue-600" />
+                        <div className="flex justify-between items-center text-sm">
+                          <div className="flex items-center gap-2 text-gray-700 dark:text-gray-500">
+                            <span className="icon-wrapper w-3 h-3 sm:w-4 sm:h-4">
+                              <Zap size={12} />
+                            </span>
                             Última Atualização:
                           </div>
                           <span className="font-medium">
-                            {selectedPedido.dataPicking
-                              ? formatDate(selectedPedido.dataPicking)
-                              : "—"}
+                            {selectedPedido.dataPicking ? formatDate(selectedPedido.dataPicking) : "—"}
                           </span>
                         </div>
                       </div>
                     </div>
-
-                    {/* Bloco de nota fiscal */}
-                    <div
-                      className={`${
-                        selectedPedido.notaFiscal
-                          ? "bg-green-50 border-green-100 dark:bg-sidebar dark:border"
-                          : "bg-gray-50 border-gray-100 dark:bg-sidebar dark:border"
-                      } rounded-lg p-4 border`}
-                    >
-                      <h4
-                        className={`text-sm font-medium mb-3 flex items-center gap-2 ${
-                          selectedPedido.notaFiscal
-                            ? "text-gray-800 dark:text-gray-500"
-                            : "text-gray-600 dark:text-gray-100"
-                        }`}
-                      >
-                        <FileText
-                          size={14}
-                          className={
-                            selectedPedido.notaFiscal
-                              ? "text-gray-600"
-                              : "text-gray-500"
-                          }
-                        />
+                    <div className={`${
+                      selectedPedido.notaFiscal ? "bg-green-50 border-green-100 dark:bg-sidebar dark:border" : "bg-gray-50 border-gray-100 dark:bg-sidebar dark:border"
+                    } rounded-lg p-3 sm:p-4 border`}>
+                      <h4 className={`text-sm font-medium mb-2 sm:mb-3 flex items-center gap-2 ${
+                        selectedPedido.notaFiscal ? "text-gray-800 dark:text-gray-500" : "text-gray-600 dark:text-gray-100"
+                      }`}>
+                        <span className="icon-wrapper w-3 h-3 sm:w-4 sm:h-4">
+                          <FileText size={12} />
+                        </span>
                         ID do Ticket
                       </h4>
-
                       {selectedPedido.notaFiscal ? (
-                        <div className="space-y-3">
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm text-gray-700 dark:text-gray-500">
-                              Número:
-                            </span>
-                            <span className="font-medium">
-                              {selectedPedido.notaFiscal}
-                            </span>
+                        <div className="space-y-2 sm:space-y-3">
+                          <div className="flex justify-between items-center text-sm">
+                            <span className="text-gray-700 dark:text-gray-500">Número:</span>
+                            <span className="font-medium">{selectedPedido.notaFiscal}</span>
                           </div>
-
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm text-gray-700 dark:text-gray-500">
-                              Status:
-                            </span>
-                            <StatusBadge
-                              text={
-                                selectedPedido.statusNotaFiscal || "Aberto"
-                              }
-                              type="success"
-                            />
+                          <div className="flex justify-between items-center text-sm">
+                            <span className="text-gray-700 dark:text-gray-500">Status:</span>
+                            <StatusBadge text={selectedPedido.statusNotaFiscal || "Aberto"} type="success" />
                           </div>
-
                           {selectedPedido.chaveNFe && (
                             <div className="pt-1">
-                              <span className="text-sm text-gray-700 dark:text-gray-500">
-                                ID Interno:
-                              </span>
-                              <div className="mt-1 bg-white p-2 rounded border border-green-200 break-all text-xs text-gray-600">
+                              <span className="text-sm text-gray-700 dark:text-gray-500">ID Interno:</span>
+                              <div className="mt-1 bg-white p-2 rounded border border-green-200 break-all text-xs sm:text-sm text-gray-600">
                                 {selectedPedido.chaveNFe}
                               </div>
                             </div>
@@ -1095,92 +891,84 @@ const PedidosTruck = () => {
                         </div>
                       ) : (
                         <div className="flex flex-col items-center justify-center py-3">
-                          <AlertTriangle
-                            size={24}
-                            className="text-gray-400 mb-2"
-                          />
-                          <p className="text-gray-500 text-sm text-center">
-                            ID ainda não gerado
-                          </p>
+                          <span className="icon-wrapper w-5 h-5 sm:w-6 sm:h-6">
+                            <AlertTriangle size={20} />
+                          </span>
+                          <p className="text-sm text-gray-500 text-center">ID ainda não gerado</p>
                         </div>
                       )}
                     </div>
-
-                    {/* Bloco de suporte */}
-                    <div className="bg-indigo-50 rounded-lg p-4 border border-indigo-100 dark:bg-sidebar dark:border">
-                      <h4 className="text-sm font-medium text-indigo-800 dark:text-gray-200 mb-3 flex items-center gap-2">
-                        <Headphones size={14} className="text-indigo-600 " />
+                    <div className="bg-indigo-50 rounded-lg p-3 sm:p-4 border border-indigo-100 dark:bg-sidebar dark:border">
+                      <h4 className="text-sm font-medium text-indigo-800 dark:text-gray-200 mb-2 sm:mb-3 flex items-center gap-2">
+                        <span className="icon-wrapper w-3 h-3 sm:w-4 sm:h-4">
+                          <Headphones size={12} />
+                        </span>
                         Detalhes do Suporte
                       </h4>
-                      <div className="space-y-3">
-                        <div className="flex justify-between items-center">
-                          <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-500">
-                            <Headphones size={16} className="text-indigo-600" />
+                      <div className="space-y-2 sm:space-y-3">
+                        <div className="flex justify-between items-center text-sm">
+                          <div className="flex items-center gap-2 text-gray-700 dark:text-gray-500">
+                            <span className="icon-wrapper w-3 h-3 sm:w-4 sm:h-4">
+                              <Headphones size={12} />
+                            </span>
                             Técnico:
                           </div>
-                          <span className="font-medium">
-                            {selectedPedido.nomeTransportadora ||
-                              "Pendente Atribuição"}
-                          </span>
+                          <span className="font-medium">{selectedPedido.nomeTransportadora || "Pendente Atribuição"}</span>
                         </div>
-
-                        <div className="flex justify-between items-center">
-                          <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-500">
-                            <Zap size={16} className="text-indigo-600" />
+                        <div className="flex justify-between items-center text-sm">
+                          <div className="flex items-center gap-2 text-gray-700 dark:text-gray-500">
+                            <span className="icon-wrapper w-3 h-3 sm:w-4 sm:h-4">
+                              <Zap size={12} />
+                            </span>
                             Prioridade:
                           </div>
-                          <span className="font-medium">
-                            {selectedPedido.estado}
-                          </span>
+                          <span className="font-medium">{selectedPedido.estado}</span>
                         </div>
-
-                        <div className="flex justify-between items-center">
-                          <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-500">
-                            <Info size={16} className="text-indigo-600" />
+                        <div className="flex justify-between items-center text-sm">
+                          <div className="flex items-center gap-2 text-gray-700 dark:text-gray-500">
+                            <span className="icon-wrapper w-3 h-3 sm:w-4 sm:h-4">
+                              <Info size={12} />
+                            </span>
                             Produto:
                           </div>
-                          <span className="font-medium">
-                            {selectedPedido.filial}
-                          </span>
+                          <span className="font-medium">{selectedPedido.filial}</span>
                         </div>
                       </div>
                     </div>
-
-                    {/* Informações adicionais do cliente */}
-                    <div className="bg-amber-50 rounded-lg p-4 border border-amber-100 dark:bg-sidebar dark:border">
-                      <h4 className="text-sm font-medium text-amber-800 dark:text-gray-200 mb-3 flex items-center gap-2">
-                        <MessageCircle size={14} className="text-amber-600" />
+                    <div className="bg-amber-50 rounded-lg p-3 sm:p-4 border border-amber-100 dark:bg-sidebar dark:border">
+                      <h4 className="text-sm font-medium text-amber-800 dark:text-gray-200 mb-2 sm:mb-3 flex items-center gap-2">
+                        <span className="icon-wrapper w-3 h-3 sm:w-4 sm:h-4">
+                          <MessageCircle size={12} />
+                        </span>
                         Informações do Solicitante
                       </h4>
-                      <div className="space-y-3">
-                        <div className="flex justify-between items-center">
-                          <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-500">
-                            <MessageCircle size={16} className="text-amber-600" />
+                      <div className="space-y-2 sm:space-y-3">
+                        <div className="flex justify-between items-center text-sm">
+                          <div className="flex items-center gap-2 text-gray-700 dark:text-gray-500">
+                            <span className="icon-wrapper w-3 h-3 sm:w-4 sm:h-4">
+                              <MessageCircle size={12} />
+                            </span>
                             Nome:
                           </div>
-                          <span className="font-medium">
-                            {selectedPedido.nomeCliente}
-                          </span>
+                          <span className="font-medium">{selectedPedido.nomeCliente}</span>
                         </div>
-
-                        <div className="flex justify-between items-center">
-                          <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-500">
-                            <FileText size={16} className="text-amber-600" />
+                        <div className="flex justify-between items-center text-sm">
+                          <div className="flex items-center gap-2 text-gray-700 dark:text-gray-500">
+                            <span className="icon-wrapper w-3 h-3 sm:w-4 sm:h-4">
+                              <FileText size={12} />
+                            </span>
                             Código:
                           </div>
-                          <span className="font-medium">
-                            {selectedPedido.codigoDoCliente}
-                          </span>
+                          <span className="font-medium">{selectedPedido.codigoDoCliente}</span>
                         </div>
-
-                        <div className="flex justify-between items-center">
-                          <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-500">
-                            <Sparkles size={16} className="text-amber-600" />
+                        <div className="flex justify-between items-center text-sm">
+                          <div className="flex items-center gap-2 text-gray-700 dark:text-gray-500">
+                            <span className="icon-wrapper w-3 h-3 sm:w-4 sm:h-4">
+                              <Sparkles size={12} />
+                            </span>
                             Grupo:
                           </div>
-                          <span className="font-medium">
-                            {selectedPedido.grupo}
-                          </span>
+                          <span className="font-medium">{selectedPedido.grupo}</span>
                         </div>
                       </div>
                     </div>

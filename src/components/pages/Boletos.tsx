@@ -1,4 +1,3 @@
-
 import * as React from "react";
 import {
   flexRender,
@@ -21,11 +20,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Paginacao } from "../pages/Paginacao";
 import { BoletoFilter } from "./FiltersBoletos/BoletosFilter";
 import { useState, useEffect } from "react";
 import { Parcela } from "../../types/parcela";
+import { format } from "date-fns";
 
 // Função para gerar dados fictícios de boletos compatíveis com a interface Parcela
 const generateMockParcelas = (count: number = 50): Parcela[] => {
@@ -61,15 +63,12 @@ const generateMockParcelas = (count: number = 50): Parcela[] => {
   return Array.from({ length: count }, (_, i) => {
     const numParcelas = Math.floor(Math.random() * 12) + 1;
     const parcelaAtual = Math.floor(Math.random() * numParcelas) + 1;
-    
+
     return {
       id: i + 1,
       statusPagamento:
-        statusPagamentoOptions[
-          Math.floor(Math.random() * statusPagamentoOptions.length)
-        ],
-      situacao:
-        situacaoOptions[Math.floor(Math.random() * situacaoOptions.length)],
+        statusPagamentoOptions[Math.floor(Math.random() * statusPagamentoOptions.length)],
+      situacao: situacaoOptions[Math.floor(Math.random() * situacaoOptions.length)],
       codigoBoleto: Math.floor(Math.random() * 1000000) + 100000,
       codigoPN: `PN${String(i + 1).padStart(4, "0")}`,
       nomePN: nomePNOptions[Math.floor(Math.random() * nomePNOptions.length)],
@@ -81,9 +80,7 @@ const generateMockParcelas = (count: number = 50): Parcela[] => {
       numNF: `NF${String(Math.floor(Math.random() * 10000)).padStart(6, "0")}`,
       parcela: `${parcelaAtual}/${numParcelas}`,
       valorParcela: parseFloat((Math.random() * 5000 + 100).toFixed(2)),
-      dataVencimento: new Date(
-        Date.now() + Math.random() * 60 * 24 * 60 * 60 * 1000
-      )
+      dataVencimento: new Date(Date.now() + Math.random() * 60 * 24 * 60 * 60 * 1000)
         .toISOString()
         .split("T")[0],
       dataPagamento:
@@ -94,15 +91,9 @@ const generateMockParcelas = (count: number = 50): Parcela[] => {
           : "",
       status: statusOptions[Math.floor(Math.random() * statusOptions.length)],
       filial: filialOptions[Math.floor(Math.random() * filialOptions.length)],
-      chaveNFe: `NFe${Math.floor(Math.random() * 100000000000000000)}`.padStart(
-        44,
-        "0"
-      ),
+      chaveNFe: `NFe${Math.floor(Math.random() * 100000000000000000)}`.padStart(44, "0"),
       statusNotaFiscal: Math.random() > 0.5 ? "Aprovada" : "Pendente",
-      pedidosCompra:
-        produtosOptions[
-          Math.floor(Math.random() * produtosOptions.length)
-        ],
+      pedidosCompra: produtosOptions[Math.floor(Math.random() * produtosOptions.length)],
     };
   });
 };
@@ -112,36 +103,27 @@ export const Boletos: React.FC = () => {
   const [allParcelas, setAllParcelas] = useState<Parcela[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [_error, setError] = useState<string | null>(null);
-  const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
-  );
-  const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({});
-  const [rowSelection, setRowSelection] = React.useState({});
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [rowSelection, setRowSelection] = useState({});
   const [searchValue, setSearchValue] = useState<string>("");
-  const [searchType] = useState<"codigoPN" | "numNF" | "codigoBoleto">(
-    "codigoPN"
-  );
-  // Estado para controlar o debounce da busca
+  const [searchType] = useState<"codigoPN" | "numNF" | "codigoBoleto">("codigoPN");
   const [debouncedSearchValue, setDebouncedSearchValue] = useState<string>("");
-  // Manter o estado da paginação atual
   const [currentPage, setCurrentPage] = useState<number>(0);
+  const [pageSize, setPageSize] = useState<number>(6);
 
-
-  // Obter as colunas usando o hook com type assertion
   const columns = useBoletosColumns() as ColumnDef<Parcela, any>[];
 
-  // Aplicar debounce ao valor de busca
+  // Debounce para busca
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchValue(searchValue);
-    }, 300); // Atraso de 300ms para evitar muitas requisições
-
+    }, 300);
     return () => clearTimeout(timer);
   }, [searchValue]);
 
-  // Efeito para carregar dados fictícios
+  // Carregar dados fictícios
   useEffect(() => {
     fetchParcelas(debouncedSearchValue);
   }, [debouncedSearchValue, searchType]);
@@ -156,24 +138,22 @@ export const Boletos: React.FC = () => {
       rowSelection,
       pagination: {
         pageIndex: currentPage,
-        pageSize: 6,
+        pageSize,
       },
     },
-    // Adicionado para corrigir o problema de paginação
-    autoResetPageIndex: false, // Impede o reset da página quando os dados/filtros mudam
-
+    autoResetPageIndex: false,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
     onPaginationChange: (updater) => {
-      // Verifica se updater é uma função ou um objeto
       if (typeof updater === "function") {
         const newPaginationState = updater(table.getState().pagination);
         setCurrentPage(newPaginationState.pageIndex);
+        setPageSize(newPaginationState.pageSize);
       } else {
-        // Se for um objeto PaginationState direto
         setCurrentPage(updater.pageIndex);
+        setPageSize(updater.pageSize);
       }
     },
     getCoreRowModel: getCoreRowModel(),
@@ -187,19 +167,12 @@ export const Boletos: React.FC = () => {
     },
   });
 
-  // Função para carregar dados fictícios
   const fetchParcelas = async (searchValue: string = "") => {
     try {
       setLoading(true);
       setError(null);
-
-      // Simular delay de rede de 2 segundos
       await new Promise((resolve) => setTimeout(resolve, 7000));
-
-      // Gerar dados fictícios
       const mockData = generateMockParcelas(50);
-
-      // Aplicar filtro de busca se houver
       let filteredData = mockData;
 
       if (searchValue) {
@@ -207,22 +180,14 @@ export const Boletos: React.FC = () => {
           const searchField = parcela[searchType];
           return (
             searchField &&
-            searchField
-              .toString()
-              .toLowerCase()
-              .includes(searchValue.toLowerCase())
+            searchField.toString().toLowerCase().includes(searchValue.toLowerCase())
           );
         });
       }
 
-      // Ordenar por data de vencimento
       filteredData.sort((a, b) => {
-        const dateA = a.dataVencimento
-          ? new Date(a.dataVencimento).getTime()
-          : 0;
-        const dateB = b.dataVencimento
-          ? new Date(b.dataVencimento).getTime()
-          : 0;
+        const dateA = a.dataVencimento ? new Date(a.dataVencimento).getTime() : 0;
+        const dateB = b.dataVencimento ? new Date(b.dataVencimento).getTime() : 0;
         return dateA - dateB;
       });
 
@@ -243,59 +208,39 @@ export const Boletos: React.FC = () => {
     }
   };
 
-  // Modificado para aplicar o filtro sem resetar a página, a menos que seja uma nova busca
-  React.useEffect(() => {
+  useEffect(() => {
     const isNewSearch = searchValue !== debouncedSearchValue;
-
     if (searchType === "codigoBoleto") {
       const numericValue = searchValue.replace(/\D/g, "");
       table.getColumn(searchType)?.setFilterValue(numericValue);
     } else if (searchType === "codigoPN" || searchType === "numNF") {
       table.getColumn(searchType)?.setFilterValue(searchValue);
     }
-
-    // Só redefina a página se for uma nova busca
     if (isNewSearch && searchValue) {
       setCurrentPage(0);
     }
   }, [searchValue, searchType, table, debouncedSearchValue]);
 
-  
-
-  // Componente de Skeleton para a tabela
+  // Skeleton para tabela (desktop)
   const SkeletonTable = () => {
     const headerGroup = table.getHeaderGroups()[0];
     return (
-      <div className="rounded-md border dark:border-gray-700">
+      <div className="hidden md:block rounded-md border dark:border-gray-700">
         <Table>
           <TableHeader className="dark:bg-gray-800">
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow
-                key={headerGroup.id}
-                className="dark:border-gray-700 dark:hover:bg-gray-800/50"
-              >
-                {headerGroup.headers.map((header) => (
-                  <TableHead
-                    key={header.id}
-                    className="dark:text-gray-300 dark:font-medium"
-                  >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
+            <TableRow className="dark:border-gray-700 dark:hover:bg-gray-800/50">
+              {headerGroup.headers.map((header) => (
+                <TableHead key={header.id} className="dark:text-gray-300 dark:font-medium">
+                  {header.isPlaceholder
+                    ? null
+                    : flexRender(header.column.columnDef.header, header.getContext())}
+                </TableHead>
+              ))}
+            </TableRow>
           </TableHeader>
           <TableBody className="dark:bg-gray-900">
-            {[...Array(6)].map((_, index) => (
-              <TableRow
-                key={index}
-                className="dark:border-gray-700 dark:hover:bg-gray-800/50"
-              >
+            {[...Array(pageSize)].map((_, index) => (
+              <TableRow key={index} className="dark:border-gray-700 dark:hover:bg-gray-800/50">
                 {headerGroup.headers.map((header) => (
                   <TableCell key={header.id} className="dark:text-gray-200">
                     <Skeleton className="h-4 w-full" />
@@ -309,44 +254,66 @@ export const Boletos: React.FC = () => {
     );
   };
 
-  // Skeleton para o rodapé (paginação e info)
-  const SkeletonFooter = () => (
-    <div className="flex items-center justify-between dark:text-gray-300">
-      <div className="flex-1 mt-3">
-        <Skeleton className="h-8 w-full" />
-      </div>
-      <div className="flex items-center gap-2">
-        <Skeleton className="h-6 w-12 rounded-full" />
-        <Skeleton className="h-4 w-32" />
-      </div>
+  // Skeleton para cards (mobile)
+  const SkeletonCards = () => (
+    <div className="md:hidden space-y-4">
+      {[...Array(pageSize)].map((_, index) => (
+        <Card key={index} className="w-full">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="flex flex-col space-y-1">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-6 w-32" />
+              </div>
+              <Skeleton className="h-6 w-20 rounded-full" />
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              {[...Array(6)].map((_, i) => (
+                <div key={i}>
+                  <Skeleton className="h-3 w-16 mb-1" />
+                  <Skeleton className="h-4 w-full" />
+                </div>
+              ))}
+            </div>
+            <div className="pt-2 border-t">
+              <Skeleton className="h-3 w-24 mb-1" />
+              <Skeleton className="h-4 w-48" />
+            </div>
+            <div className="flex justify-between items-center pt-2 border-t text-xs">
+              <Skeleton className="h-3 w-16" />
+              <Skeleton className="h-3 w-16" />
+              <Skeleton className="h-3 w-16" />
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+
+  // Skeleton para paginação
+  const SkeletonPagination = () => (
+    <div className="flex items-center justify-center md:justify-between space-x-2 py-4 px-2">
+      <Skeleton className="h-8 w-64" />
     </div>
   );
 
   if (loading) {
     return (
-      <div className="w-full p-2 ">
-        <Skeleton className="h-8 w-64 mb-4" /> {/* Título */}
-        <Skeleton className="h-12 w-full mb-4 rounded-md" /> {/* Filtro */}
+      <div className="w-full p-2 md:p-4">
+        <Skeleton className="h-8 w-48 mb-4" />
+        <Skeleton className="h-12 w-full mb-4 rounded-md" />
         <SkeletonTable />
-        <SkeletonFooter />
+        <SkeletonCards />
+        <SkeletonPagination />
       </div>
     );
   }
 
-  
-
-  
-
-  // Componente de paginação modificado para usar o estado currentPage
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page - 1);
-  };
-
   return (
-    <div className="w-full p-2 ">
-      <h1 className="text-3xl font-bold dark:text-white">
-        Boletos 
-      </h1>
+    <div className="w-full p-2 md:p-4">
+      <h1 className="text-2xl md:text-3xl font-bold mb-4 dark:text-white">Boletos</h1>
 
       <BoletoFilter
         allParcelas={allParcelas}
@@ -356,29 +323,20 @@ export const Boletos: React.FC = () => {
           setSearchValue(value);
         }}
       />
-      <div className="rounded-md border dark:border-gray-700">
+
+      {/* Tabela para desktop */}
+      <div className="hidden md:block rounded-md border dark:border-gray-700">
         <Table>
           <TableHeader className="dark:bg-gray-800">
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow
-                key={headerGroup.id}
-                className="dark:border-gray-700 dark:hover:bg-gray-800/50"
-              >
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead
-                      key={header.id}
-                      className="dark:text-gray-300 dark:font-medium"
-                    >
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                    </TableHead>
-                  );
-                })}
+              <TableRow key={headerGroup.id} className="dark:border-gray-700 dark:hover:bg-gray-800/50">
+                {headerGroup.headers.map((header) => (
+                  <TableHead key={header.id} className="dark:text-gray-300 dark:font-medium">
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(header.column.columnDef.header, header.getContext())}
+                  </TableHead>
+                ))}
               </TableRow>
             ))}
           </TableHeader>
@@ -392,20 +350,14 @@ export const Boletos: React.FC = () => {
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id} className="dark:text-gray-200">
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
                 </TableRow>
               ))
             ) : (
               <TableRow className="dark:border-gray-700">
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center dark:text-gray-400"
-                >
+                <TableCell colSpan={columns.length} className="h-24 text-center dark:text-gray-400">
                   Nenhum boleto encontrado.
                 </TableCell>
               </TableRow>
@@ -413,46 +365,107 @@ export const Boletos: React.FC = () => {
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-between dark:text-gray-300">
-        <div className="flex-1 mt-3">
-          <Paginacao
-            currentPage={currentPage + 1}
-            pageCount={table.getPageCount()}
-            onPageChange={handlePageChange}
-            pageSize={6}
-            totalItems={parcelas.length}
-            onPageSizeChange={function (_pageSize: number): void {
-              // Implementar se necessário
-            }}
-          />
-        </div>
-        <div className="flex items-center gap-2 font-medium text-xs uppercase tracking-wider group">
-          <div className="relative">
-            <span className="bg-gradient-to-r from-sky-900 to-slate-600 dark:from-indigo-600 dark:to-purple-700 text-white px-3 py-1.5 rounded-full shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 font-mono text-sm">
-              {parcelas.length}
-            </span>
-            <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-400 rounded-full animate-pulse"></div>
-          </div>
-          <div className="flex items-center gap-1.5 transition-colors duration-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
-            <svg
-              className="w-4 h-4 transition-transform duration-300 group-hover:rotate-12"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-              />
-            </svg>
-            <span className="text-gray-500 dark:text-gray-400 transition-colors duration-300 group-hover:text-sky-500 dark:group-hover:text-indigo-300">
-              Boleto{parcelas.length !== 1 ? "s" : ""} registrado
-              {parcelas.length !== 1 ? "s" : ""}
-            </span>
-          </div>
-        </div>
+
+      {/* Cards para mobile */}
+      <div className="md:hidden space-y-4">
+        {table.getRowModel().rows?.length ? (
+          table.getRowModel().rows.map((row) => {
+            const parcela = row.original as Parcela;
+            return (
+              <Card key={row.id} className="w-full">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium text-muted-foreground">Boleto</span>
+                      <span className="text-lg font-semibold">#{parcela.codigoBoleto}</span>
+                    </div>
+                    <Badge
+                      variant={
+                        parcela.statusPagamento === "Pago"
+                          ? "default"
+                          : parcela.statusPagamento === "Pendente"
+                          ? "secondary"
+                          : parcela.statusPagamento === "Atrasado"
+                          ? "destructive"
+                          : "outline"
+                      }
+                    >
+                      {parcela.statusPagamento}
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <span className="text-muted-foreground">Parceiro:</span>
+                      <p className="font-medium truncate">{parcela.nomePN}</p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Código PN:</span>
+                      <p className="font-medium">{parcela.codigoPN}</p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Vencimento:</span>
+                      <p className="font-medium">
+                        {format(new Date(parcela.dataVencimento), "dd/MM/yyyy")}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Valor:</span>
+                      <p className="font-medium">R$ {parcela.valorParcela.toFixed(2)}</p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Nota Fiscal:</span>
+                      <p className="font-medium">{parcela.numNF}</p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Status NF:</span>
+                      <Badge
+                        variant={parcela.statusNotaFiscal === "Aprovada" ? "default" : "secondary"}
+                        className="text-xs"
+                      >
+                        {parcela.statusNotaFiscal}
+                      </Badge>
+                    </div>
+                  </div>
+                  {parcela.pedidosCompra && (
+                    <div className="pt-2 border-t">
+                      <span className="text-muted-foreground text-sm">Produto:</span>
+                      <p className="font-medium text-sm">{parcela.pedidosCompra}</p>
+                    </div>
+                  )}
+                  <div className="flex justify-between items-center pt-2 border-t text-xs text-muted-foreground">
+                    <span>Filial: {parcela.filial}</span>
+                    <span>Situação: {parcela.situacao}</span>
+                    <span>Status: {parcela.status}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })
+        ) : (
+          <Card>
+            <CardContent className="flex items-center justify-center h-24">
+              <p className="text-muted-foreground">Nenhum boleto encontrado.</p>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {/* Paginação */}
+      <div className="flex items-center justify-center md:justify-between space-x-2 py-4 px-2">
+        <Paginacao
+          currentPage={currentPage + 1}
+          pageCount={table.getPageCount()}
+          pageSize={pageSize}
+          totalItems={table.getFilteredRowModel().rows.length}
+          onPageChange={(page) => setCurrentPage(page - 1)}
+          onPageSizeChange={setPageSize}
+          showPageSizeSelector={true}
+          showJumpToPage={true}
+          showItemsInfo={true}
+          pageSizeOptions={[5, 6, 10, 20, 50, 100]}
+        />
       </div>
     </div>
   );
