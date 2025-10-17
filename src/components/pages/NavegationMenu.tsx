@@ -14,6 +14,7 @@ import {
   X,
   Sun,
   Moon,
+  ChartNoAxesCombined,
 } from "lucide-react"
 import Logo from "@/assets/logo.png"
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@radix-ui/react-dropdown-menu"
@@ -165,6 +166,13 @@ const items = [
     title: "Rastrear Pedidos",
     url: "/rastreio-pedidos",
     icon: Truck,
+    description: "Track your shipments",
+    notificationKey: "tracking" as const,
+  },
+  {
+    title: "Dashboard",
+    url: "/dashboard",
+    icon: ChartNoAxesCombined,
     description: "Track your shipments",
     notificationKey: "tracking" as const,
   },

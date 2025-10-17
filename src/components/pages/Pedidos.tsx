@@ -194,7 +194,7 @@ export const Pedidos: React.FC = () => {
       })
 
       // Simula delay de carregamento de 2 segundos
-      await new Promise(resolve => setTimeout(resolve, 7000))
+      await new Promise(resolve => setTimeout(resolve, 4000))
 
       // Filter fictional data by date range
       const filteredPedidos = allPedidos.filter((pedido) => {

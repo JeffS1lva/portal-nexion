@@ -8,6 +8,7 @@ import { Pedidos } from "./components/pages/Pedidos"
 import { BrowserRouter as Router, Route, Routes, Navigate, useNavigate } from "react-router-dom"
 import { Init } from "./components/pages/Home"
 import { LoginPage } from "./components/auth/LoginForm"
+import { Dashboard } from "@/components/pages/Dashboard"
 import { Toaster } from "sonner"
 import { ThemeProvider } from "./components/Dark-Mode/ThemeProvider"
 import CookieConsent from "./components/auth/cookies/CookieConsent"
@@ -101,8 +102,8 @@ export function App() {
                       <Route path="/inicio" element={<Init />} />
                       <Route path="/pedidos" element={<Pedidos />} />
                       <Route path="/boletos" element={<Boletos />} />
-
                       <Route path="/rastreio-pedidos" element={<PedidoTruck />} />
+                      <Route path="/dashboard" element={<Dashboard />} />
                       <Route path="*" element={<Navigate to="/inicio" replace />} />
                     </Routes>
                   </AuthenticatedLayout>
