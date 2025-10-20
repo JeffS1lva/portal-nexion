@@ -7,8 +7,8 @@ export default defineConfig(({ mode }) => {
   const isProduction = mode === "production";
 
   return {
-    base: "/",  // Mude para "/" em produção (remove o "/portal-nexion/")
-    plugins: [react(), tailwindcss()],
+    base: "/", // Ensures correct base path for SPA routing
+    plugins: [react(), tailwindcss(), ],
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./src"),
@@ -23,5 +23,6 @@ export default defineConfig(({ mode }) => {
         input: path.resolve(__dirname, "index.html"),
       },
     },
+   
   } as UserConfig;
 });

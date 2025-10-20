@@ -146,7 +146,7 @@ export const Pedidos: React.FC = () => {
     end: undefined,
   })
 
-  const [pageSize, setPageSize] = React.useState<number>(7)
+  const [pageSize, setPageSize] = React.useState<number>(8)
 
   const columns = usePedidosColumns()
 
@@ -194,7 +194,7 @@ export const Pedidos: React.FC = () => {
       })
 
       // Simula delay de carregamento de 2 segundos
-      await new Promise(resolve => setTimeout(resolve, 4000))
+      await new Promise(resolve => setTimeout(resolve, 3000))
 
       // Filter fictional data by date range
       const filteredPedidos = allPedidos.filter((pedido) => {

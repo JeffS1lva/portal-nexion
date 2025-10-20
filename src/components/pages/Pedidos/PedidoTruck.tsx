@@ -207,7 +207,7 @@ const PedidosTruck = () => {
     try {
       setLoading(true);
       setError(null);
-      await new Promise((resolve) => setTimeout(resolve, 5000));
+      await new Promise((resolve) => setTimeout(resolve, 3000));
       setActiveDateRange({ start: startDate, end: endDate });
       const pedidosData = allData.filter((pedido) => {
         const pedidoDate = new Date(pedido.dataLancamentoPedido);

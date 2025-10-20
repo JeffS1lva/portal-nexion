@@ -1,11 +1,9 @@
-
 import type React from "react"
-
 import { useEffect, useState } from "react"
 import { NavegationMenu } from "@/components/pages/NavegationMenu"
 import { Boletos } from "./components/pages/Boletos"
 import { Pedidos } from "./components/pages/Pedidos"
-import { BrowserRouter as Router, Route, Routes, Navigate, useNavigate } from "react-router-dom"
+import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom"
 import { Init } from "./components/pages/Home"
 import { LoginPage } from "./components/auth/LoginForm"
 import { Dashboard } from "@/components/pages/Dashboard"
@@ -13,8 +11,9 @@ import { Toaster } from "sonner"
 import { ThemeProvider } from "./components/Dark-Mode/ThemeProvider"
 import CookieConsent from "./components/auth/cookies/CookieConsent"
 import PedidoTruck from "./components/pages/Pedidos/PedidoTruck"
+import { Chatbot } from "./components/pages/chatbot/ChatBot"
 
-// Define a interface para os dados do usuário
+// Interface para os dados do usuário
 interface UserData {
   login: string
   email: string
@@ -62,62 +61,87 @@ export function App() {
     }
   }, [])
 
-  // Callback para quando o consentimento for dado
   const handleCookieConsent = (preferences: Record<string, boolean>) => {
     console.log("Cookie consent given with preferences:", preferences)
-
-    // Você pode usar as preferências para configurar analytics, marketing, etc.
-    if (preferences.analytics) {
-      // Inicializar Google Analytics, por exemplo
-      console.log("Analytics cookies aceitos")
-    }
-
-    if (preferences.marketing) {
-      // Inicializar pixels de marketing, por exemplo
-      console.log("Marketing cookies aceitos")
-    }
   }
 
   return (
     <ThemeProvider defaultTheme="system" storageKey="system">
       <Router>
-        {/* 
-          Configuração do CookieConsent:
-          - validityDays: 30 dias de validade (padrão)
-          - policyVersion: versão da política (força novo consentimento se mudar)
-          - onConsent: callback quando consentimento é dado
-        */}
         <CookieConsent validityDays={30} policyVersion="1.0" onConsent={handleCookieConsent}>
           <Routes>
-            {/* Rota pública do login */}
-            <Route path="/login" element={isAuthenticated ? <Navigate to="/inicio" replace /> : <LoginPage />} />
-
-            {/* Rotas protegidas */}
-            <Route
-              path="/*"
+            {/* ROTA PÚBLICA - Login */}
+            <Route 
+              path="/login" 
               element={
-                isAuthenticated ? (
-                  <AuthenticatedLayout authData={authData} onLogout={handleLogout}>
-                    <Routes>
-                      <Route path="/inicio" element={<Init />} />
-                      <Route path="/pedidos" element={<Pedidos />} />
-                      <Route path="/boletos" element={<Boletos />} />
-                      <Route path="/rastreio-pedidos" element={<PedidoTruck />} />
-                      <Route path="/dashboard" element={<Dashboard />} />
-                      <Route path="*" element={<Navigate to="/inicio" replace />} />
-                    </Routes>
-                  </AuthenticatedLayout>
-                ) : (
-                  <Navigate to="/login" replace />
-                )
-              }
+                isAuthenticated 
+                  ? <Navigate to="/inicio" replace /> 
+                  : <LoginPage />
+              } 
             />
 
-            {/* Redireciona a rota raiz */}
+            {/* ROTAS PROTEGIDAS - Layout com Navegação */}
+            <Route 
+              path="/inicio" 
+              element={
+                isAuthenticated 
+                  ? <AuthenticatedLayout authData={authData} onLogout={handleLogout}>
+                      <Init />
+                    </AuthenticatedLayout>
+                  : <Navigate to="/login" replace />
+              } 
+            />
+            
+            <Route 
+              path="/pedidos" 
+              element={
+                isAuthenticated 
+                  ? <AuthenticatedLayout authData={authData} onLogout={handleLogout}>
+                      <Pedidos />
+                    </AuthenticatedLayout>
+                  : <Navigate to="/login" replace />
+              } 
+            />
+            
+            <Route 
+              path="/boletos" 
+              element={
+                isAuthenticated 
+                  ? <AuthenticatedLayout authData={authData} onLogout={handleLogout}>
+                      <Boletos />
+                    </AuthenticatedLayout>
+                  : <Navigate to="/login" replace />
+              } 
+            />
+            
+            <Route 
+              path="/rastreio-pedidos" 
+              element={
+                isAuthenticated 
+                  ? <AuthenticatedLayout authData={authData} onLogout={handleLogout}>
+                      <PedidoTruck />
+                    </AuthenticatedLayout>
+                  : <Navigate to="/login" replace />
+              } 
+            />
+            
+            <Route 
+              path="/dashboard" 
+              element={
+                isAuthenticated 
+                  ? <AuthenticatedLayout authData={authData} onLogout={handleLogout}>
+                      <Dashboard />
+                    </AuthenticatedLayout>
+                  : <Navigate to="/login" replace />
+              } 
+            />
+
+            {/* Redirecionamentos */}
             <Route
               path="/"
               element={isAuthenticated ? <Navigate to="/inicio" replace /> : <Navigate to="/login" replace />}
             />
+            <Route path="*" element={<Navigate to="/login" replace />} />
           </Routes>
 
           <Toaster />
@@ -127,7 +151,7 @@ export function App() {
   )
 }
 
-// Componente para o layout após autenticação (LAYOUT DE HEADER)
+// Layout autenticado SIMPLIFICADO
 function AuthenticatedLayout({
   children,
   onLogout,
@@ -137,34 +161,16 @@ function AuthenticatedLayout({
   onLogout: () => void
   authData: UserData | null
 }) {
-  const navigate = useNavigate()
-
-  useEffect(() => {
-    const token = localStorage.getItem("token")
-    const isAuth = localStorage.getItem("isAuthenticated") === "true"
-
-    if (!token || !isAuth) {
-      onLogout()
-      navigate("/login", { replace: true })
-    }
-  }, [onLogout, navigate])
-
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header Navigation */}
-      <NavegationMenu
-        onLogout={() => {
-          onLogout()
-          navigate("/login", { replace: true })
-        }}
-        authData={authData}
-      />
+      <NavegationMenu onLogout={onLogout} authData={authData} />
 
       {/* Main Content */}
       <main className="relative">
-        {/* Page Content */}
-        <div className=" mx-auto px-4 py-6">{children}</div>
+        <div className="mx-auto px-4 py-6">{children}</div>
       </main>
+      <Chatbot />
     </div>
   )
 }

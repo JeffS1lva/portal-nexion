@@ -1,3 +1,4 @@
+// Boletos.tsx
 import * as React from "react";
 import {
   flexRender,
@@ -25,7 +26,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Paginacao } from "../pages/Paginacao";
 import { BoletoFilter } from "./FiltersBoletos/BoletosFilter";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Parcela } from "../../types/parcela";
 import { format } from "date-fns";
 
@@ -99,7 +100,6 @@ const generateMockParcelas = (count: number = 50): Parcela[] => {
 };
 
 export const Boletos: React.FC = () => {
-  const [parcelas, setParcelas] = useState<Parcela[]>([]);
   const [allParcelas, setAllParcelas] = useState<Parcela[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [_error, setError] = useState<string | null>(null);
@@ -107,8 +107,6 @@ export const Boletos: React.FC = () => {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
-  const [currentPage, setCurrentPage] = useState<number>(0);
-  const [pageSize, setPageSize] = useState<number>(6);
 
   const columns = useBoletosColumns() as ColumnDef<Parcela, any>[];
 
@@ -118,40 +116,25 @@ export const Boletos: React.FC = () => {
   }, []);
 
   const table = useReactTable({
-    data: parcelas,
+    data: allParcelas,
     columns,
     state: {
       sorting,
       columnFilters,
       columnVisibility,
       rowSelection,
-      pagination: {
-        pageIndex: currentPage,
-        pageSize,
-      },
     },
-    autoResetPageIndex: false,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
-    onPaginationChange: (updater) => {
-      if (typeof updater === "function") {
-        const newPaginationState = updater(table.getState().pagination);
-        setCurrentPage(newPaginationState.pageIndex);
-        setPageSize(newPaginationState.pageSize);
-      } else {
-        setCurrentPage(updater.pageIndex);
-        setPageSize(updater.pageSize);
-      }
-    },
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     initialState: {
       pagination: {
-        pageSize: 6,
+        pageSize: 8,
       },
     },
   });
@@ -163,10 +146,8 @@ export const Boletos: React.FC = () => {
       await new Promise((resolve) => setTimeout(resolve, 1000)); // Simula atraso
       const mockData = generateMockParcelas(50);
       setAllParcelas(mockData);
-      setParcelas(mockData);
     } catch (err) {
       setError("error");
-      setParcelas([]);
       setAllParcelas([]);
     } finally {
       setLoading(false);
@@ -174,37 +155,29 @@ export const Boletos: React.FC = () => {
   };
 
   // Manipulador para a busca
-  const handleSearch = (value: string, type: string) => {
-    if (!value) {
-      setParcelas(allParcelas);
-      table.setPageIndex(0);
-      return;
+  const handleSearch = useCallback((value: string, type: string) => {
+    // Limpa todos os filtros
+    table.getAllColumns().forEach((column) => column.setFilterValue(""));
+    
+    if (value && type) {
+      const column = table.getColumn(type);
+      if (column) column.setFilterValue(value);
     }
+    
+    table.setPageIndex(0); // ✅ Automático!
+  }, [table]);
 
-    let filteredData = [...allParcelas];
-    if (type === "dataVencimento") {
-      const [start, end] = value.split("|").map((date) => new Date(date));
-      filteredData = filteredData.filter((item) => {
-        if (!item.dataVencimento) return false;
-        const itemDate = new Date(item.dataVencimento.split("T")[0]);
-        return itemDate >= start && itemDate <= end;
-      });
-    } else {
-      const lowerValue = value.toLowerCase();
-      filteredData = filteredData.filter((item) => {
-        const field = item[type as keyof Parcela];
-        if (!field) return false;
-        if (type === "codigoBoleto") {
-          const numericValue = lowerValue.replace(/\D/g, "");
-          return field.toString().includes(numericValue);
-        }
-        return field.toString().toLowerCase().includes(lowerValue);
-      });
+  // ✅ FILTRO ESPECIAL PARA DATA (Range)
+  useEffect(() => {
+    const column = table.getColumn("dataVencimento");
+    if (!column) return;
+
+    const filterValue = column.getFilterValue();
+    if (typeof filterValue === "string" && filterValue.includes("|")) {
+      const [start, end] = filterValue.split("|").map(d => new Date(d));
+      column.setFilterValue([start, end]); // ✅ Array para range
     }
-
-    setParcelas(filteredData);
-    table.setPageIndex(0);
-  };
+  }, [table]);
 
   // Skeleton para tabela (desktop)
   const SkeletonTable = () => {
@@ -224,7 +197,7 @@ export const Boletos: React.FC = () => {
             </TableRow>
           </TableHeader>
           <TableBody className="dark:bg-gray-900">
-            {[...Array(pageSize)].map((_, index) => (
+            {[...Array(table.getState().pagination.pageSize)].map((_, index) => (
               <TableRow key={index} className="dark:border-gray-700 dark:hover:bg-gray-800/50">
                 {headerGroup.headers.map((header) => (
                   <TableCell key={header.id} className="dark:text-gray-200">
@@ -242,7 +215,7 @@ export const Boletos: React.FC = () => {
   // Skeleton para cards (mobile)
   const SkeletonCards = () => (
     <div className="md:hidden space-y-4">
-      {[...Array(pageSize)].map((_, index) => (
+      {[...Array(table.getState().pagination.pageSize)].map((_, index) => (
         <Card key={index} className="w-full">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
@@ -301,8 +274,6 @@ export const Boletos: React.FC = () => {
       <h1 className="text-2xl md:text-3xl font-bold mb-4 dark:text-white">Boletos</h1>
 
       <BoletoFilter
-        allParcelas={allParcelas}
-        setParcelas={setParcelas}
         table={table}
         onSearch={handleSearch}
       />
@@ -438,12 +409,12 @@ export const Boletos: React.FC = () => {
       {/* Paginação */}
       <div className="flex items-center justify-center md:justify-between space-x-2 py-4 px-2">
         <Paginacao
-          currentPage={currentPage + 1}
+          currentPage={table.getState().pagination.pageIndex + 1}
           pageCount={table.getPageCount()}
-          pageSize={pageSize}
+          pageSize={table.getState().pagination.pageSize}
           totalItems={table.getFilteredRowModel().rows.length}
-          onPageChange={(page) => setCurrentPage(page - 1)}
-          onPageSizeChange={setPageSize}
+          onPageChange={(page) => table.setPageIndex(page - 1)}
+          onPageSizeChange={(size) => table.setPageSize(size)}
           showPageSizeSelector={true}
           showJumpToPage={true}
           showItemsInfo={true}

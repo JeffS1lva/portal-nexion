@@ -2,6 +2,20 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
+export function CustomCardPremium({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card"
+      className={cn(
+        "rounded-2xl",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+
 function Card({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div

@@ -1,3 +1,4 @@
+// BoletoFilter.tsx
 import * as React from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -18,18 +19,10 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CalendarIcon, Search, X } from "lucide-react";
 import { Table } from "@tanstack/react-table";
-import { Parcela } from "@/types/parcela";
 
 interface DateRange {
   start: Date | null;
   end: Date | null;
-}
-
-interface BoletoFilterProps {
-  allParcelas: Parcela[];
-  setParcelas: React.Dispatch<React.SetStateAction<Parcela[]>>;
-  table: Table<Parcela>;
-  onSearch: (value: string, type: FilterType) => void;
 }
 
 type FilterType =
@@ -40,12 +33,12 @@ type FilterType =
   | "dataVencimento"
   | "pedidosCompra";
 
-export function BoletoFilter({
-  allParcelas,
-  setParcelas,
-  table,
-  onSearch,
-}: BoletoFilterProps) {
+interface BoletoFilterProps {
+  table: Table<any>;
+  onSearch: (value: string, type: FilterType) => void;
+}
+
+export function BoletoFilter({ onSearch }: BoletoFilterProps) {
   const [filterType, setFilterType] = React.useState<FilterType>("codigoBoleto");
   const [searchValue, setSearchValue] = React.useState<string>("");
   const [dateRange, setDateRange] = React.useState<DateRange>({
@@ -55,8 +48,6 @@ export function BoletoFilter({
   const [isCalendarOpen, setIsCalendarOpen] = React.useState(false);
 
   const applyFilters = React.useCallback(() => {
-    let filteredData = [...allParcelas];
-
     if (filterType === "dataVencimento") {
       if (dateRange.start && dateRange.end) {
         const formattedRange = `${format(dateRange.start, "yyyy-MM-dd")}|${format(
@@ -64,72 +55,30 @@ export function BoletoFilter({
           "yyyy-MM-dd"
         )}`;
         onSearch(formattedRange, filterType);
-        filteredData = filteredData.filter((item) => {
-          if (!item.dataVencimento) return false;
-          const datePart = item.dataVencimento.split("T")[0];
-          const [year, month, day] = datePart.split("-").map(Number);
-          const itemDate = new Date(Date.UTC(year, month - 1, day));
-          return itemDate >= dateRange.start! && itemDate <= dateRange.end!;
-        });
       } else {
         onSearch("", filterType);
       }
     } else if (searchValue.trim()) {
-      const value = searchValue.toLowerCase().trim();
-      onSearch(value, filterType);
-      switch (filterType) {
-        case "codigoBoleto":
-          const numericValue = value.replace(/\D/g, "");
-          filteredData = filteredData.filter((item) =>
-            item.codigoBoleto.toString().includes(numericValue)
-          );
-          break;
-        case "nomePN":
-          filteredData = filteredData.filter((item) =>
-            item.nomePN?.toLowerCase().includes(value)
-          );
-          break;
-        case "cnpj":
-          const cnpjSearch = value.replace(/[^\d]/g, "");
-          filteredData = filteredData.filter((item) =>
-            item.cnpj?.replace(/[^\d]/g, "").includes(cnpjSearch)
-          );
-          break;
-        case "numNF":
-          filteredData = filteredData.filter((item) =>
-            item.numNF?.toLowerCase().includes(value)
-          );
-          break;
-        case "pedidosCompra":
-          filteredData = filteredData.filter((item) =>
-            item.pedidosCompra?.toLowerCase().includes(value)
-          );
-          break;
-      }
+      onSearch(searchValue.trim(), filterType);
     } else {
       onSearch("", filterType);
     }
-
-    setParcelas(filteredData);
-    table.setPageIndex(0);
-  }, [allParcelas, filterType, searchValue, dateRange, setParcelas, table, onSearch]);
+  }, [filterType, searchValue, dateRange, onSearch]);
 
   const handleReset = () => {
     setSearchValue("");
     setFilterType("codigoBoleto");
     setDateRange({ start: null, end: null });
-    setParcelas(allParcelas);
-    table.setPageIndex(0);
+    setIsCalendarOpen(false);
     onSearch("", "codigoBoleto");
   };
 
   const handleApplyDateFilter = () => {
-    if (dateRange.start && dateRange.end) {
-      applyFilters();
-      setIsCalendarOpen(false);
-    }
+    applyFilters();
+    setIsCalendarOpen(false);
   };
 
+  // ✅ Debounce para busca de texto
   React.useEffect(() => {
     if (filterType === "dataVencimento") return;
     const delayDebounce = setTimeout(() => {
@@ -150,20 +99,13 @@ export function BoletoFilter({
 
   const getPlaceholder = () => {
     switch (filterType) {
-      case "codigoBoleto":
-        return "Buscar por código do boleto...";
-      case "pedidosCompra":
-        return "Buscar por número do Pedido de Compra...";
-      case "nomePN":
-        return "Buscar por nome do cliente...";
-      case "cnpj":
-        return "Buscar por CNPJ...";
-      case "numNF":
-        return "Buscar por número da NF...";
-      case "dataVencimento":
-        return "Selecione um período de vencimento";
-      default:
-        return "Pesquisar...";
+      case "codigoBoleto": return "Buscar por código do boleto...";
+      case "pedidosCompra": return "Buscar por número do Pedido de Compra...";
+      case "nomePN": return "Buscar por nome do cliente...";
+      case "cnpj": return "Buscar por CNPJ...";
+      case "numNF": return "Buscar por número da NF...";
+      case "dataVencimento": return "Selecione um período de vencimento";
+      default: return "Pesquisar...";
     }
   };
 
@@ -173,13 +115,7 @@ export function BoletoFilter({
   };
 
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        applyFilters();
-      }}
-      className="space-y-4 py-2"
-    >
+    <form onSubmit={(e) => { e.preventDefault(); applyFilters(); }} className="space-y-4 py-2">
       <div className="flex flex-col space-y-3 md:flex-row md:items-start md:space-y-0 md:space-x-2">
         {filterType === "dataVencimento" ? (
           <div className="flex flex-col space-y-2 w-full md:flex-row md:flex-1 md:space-y-0 md:space-x-2">
@@ -192,8 +128,7 @@ export function BoletoFilter({
                   <CalendarIcon className="mr-2 h-4 w-4" />
                   {dateRange.start && dateRange.end ? (
                     <>
-                      {formatDateSafely(dateRange.start)} -{" "}
-                      {formatDateSafely(dateRange.end)}
+                      {formatDateSafely(dateRange.start)} - {formatDateSafely(dateRange.end)}
                     </>
                   ) : (
                     "Selecione o período de vencimento"
@@ -203,40 +138,22 @@ export function BoletoFilter({
               <PopoverContent className="w-auto p-0" align="start">
                 <Calendar
                   mode="range"
-                  selected={{
-                    from: dateRange.start || undefined,
-                    to: dateRange.end || undefined,
-                  }}
+                  selected={{ from: dateRange.start || undefined, to: dateRange.end || undefined }}
                   onSelect={(range) => {
                     if (range?.from && range?.to) {
                       const endDate = new Date(range.to);
                       endDate.setHours(23, 59, 59, 999);
-                      setDateRange({
-                        start: range.from,
-                        end: endDate,
-                      });
+                      setDateRange({ start: range.from, end: endDate });
                     } else {
-                      setDateRange({
-                        start: range?.from || null,
-                        end: range?.to || null,
-                      });
+                      setDateRange({ start: range?.from || null, end: range?.to || null });
                     }
                   }}
                   locale={ptBR}
                   initialFocus
                 />
                 <div className="p-2 border-t flex justify-end">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setDateRange({ start: null, end: null });
-                      setIsCalendarOpen(false);
-                      onSearch("", filterType);
-                    }}
-                  >
-                    <X className="mr-2 h-4 w-4" />
-                    Limpar
+                  <Button variant="ghost" size="sm" onClick={handleReset}>
+                    <X className="mr-2 h-4 w-4" /> Limpar
                   </Button>
                 </div>
               </PopoverContent>

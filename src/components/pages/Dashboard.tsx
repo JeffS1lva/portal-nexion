@@ -1,12 +1,12 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Package, 
-  TrendingUp, 
-  CheckCircle, 
-  XCircle, 
-  Clock, 
+import {
+  Package,
+  TrendingUp,
+  CheckCircle,
+  XCircle,
+  Clock,
   RefreshCw,
   FileText,
   Users,
@@ -17,18 +17,18 @@ import {
   Award,
   Zap
 } from 'lucide-react';
-import { 
- 
-  BarChart, 
-  Bar, 
-  PieChart, 
-  Pie, 
+import {
+
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
   Cell,
-  XAxis, 
-  YAxis, 
+  XAxis,
+  YAxis,
   CartesianGrid,
-  Tooltip, 
-  Legend, 
+  Tooltip,
+  Legend,
   ResponsiveContainer,
   Area,
   AreaChart
@@ -138,10 +138,10 @@ const formatDate = (date: Date, formatStr: string): string => {
   const year = d.getFullYear();
   const hours = String(d.getHours()).padStart(2, '0');
   const minutes = String(d.getMinutes()).padStart(2, '0');
-  
+
   const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
   const monthsFull = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
-  
+
   if (formatStr === 'dd/MM/yyyy HH:mm') {
     return `${day}/${month}/${year} ${hours}:${minutes}`;
   } else if (formatStr === 'dd de MMMM') {
@@ -292,11 +292,11 @@ export const Dashboard: React.FC = () => {
     if (isLoading) return [];
     const now = new Date();
     const months = [];
-    
+
     for (let i = 5; i >= 0; i--) {
       const month = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const nextMonth = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
-      
+
       const pedidosDoMes = pedidos.filter(p => {
         const date = new Date(p.dataLancamentoPedido);
         return date >= month && date < nextMonth;
@@ -310,7 +310,7 @@ export const Dashboard: React.FC = () => {
         renovados: pedidosDoMes.filter(p => p.statusDoPedido === 'Renovado').length,
       });
     }
-    
+
     return months;
   }, [pedidos, isLoading]);
 
@@ -344,16 +344,16 @@ export const Dashboard: React.FC = () => {
     pedidos.forEach(p => {
       grupoCount[p.grupo] = (grupoCount[p.grupo] || 0) + 1;
     });
-    return Object.entries(grupoCount).map(([name, value]) => ({ 
-      name: name.replace('GRUPO_', ''), 
-      value 
+    return Object.entries(grupoCount).map(([name, value]) => ({
+      name: name.replace('GRUPO_', ''),
+      value
     }));
   }, [pedidos, isLoading]);
 
   // Renderização condicional
   if (isLoading) {
     return (
-      <div className="w-full min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-slate-900 p-4 md:p-6 lg:p-8">
+      <div className="w-full min-h-screen  dark:from-gray-900 dark:via-gray-800 dark:to-slate-900 p-4 md:p-6 lg:p-8">
         <div className="mx-auto space-y-6">
           {/* Header Skeleton */}
           <HeaderSkeleton />
@@ -422,7 +422,7 @@ export const Dashboard: React.FC = () => {
 
   // Renderização do conteúdo real (código anterior mantido igual)
   return (
-    <div className="w-full min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-slate-900 p-4 md:p-6 lg:p-8">
+    <div className="w-full min-h-screen  dark:from-gray-900 dark:via-gray-800 dark:to-slate-900 p-4 md:p-6 lg:p-8">
       <div className="mx-auto space-y-6">
         {/* Header Premium */}
         <div className="relative overflow-hidden rounded-2xl border border-white/20 dark:border-gray-700 p-8 shadow-2xl bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm">
@@ -432,10 +432,15 @@ export const Dashboard: React.FC = () => {
               <div>
                 <div className="flex items-center gap-3 mb-2">
                   <Sparkles className="h-8 w-8 text-indigo-500 dark:text-indigo-400 animate-pulse" />
-                  <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white">Dashboard Executivo</h1>
+                  <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white">
+                    Nexion Insights
+                  </h1>
                 </div>
-                <p className="text-lg text-gray-600 dark:text-gray-300">Análise inteligente de performance e resultados</p>
+                <p className="text-lg text-gray-600 dark:text-gray-300">
+                  Inteligência corporativa e análise estratégica de resultados
+                </p>
               </div>
+
               <div className="flex flex-col gap-2">
                 <Badge variant="outline" className="bg-white/20 dark:bg-gray-700/50 backdrop-blur-sm border-white/30 dark:border-gray-600 w-fit px-4 py-2 text-gray-900 dark:text-white">
                   <Clock className="h-4 w-4 mr-2 inline text-indigo-500" />
@@ -581,21 +586,21 @@ export const Dashboard: React.FC = () => {
                 <AreaChart data={monthlyData}>
                   <defs>
                     <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
                     </linearGradient>
                     <linearGradient id="colorAtivados" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb dark:#374151" />
                   <XAxis dataKey="mes" stroke="#6b7280 dark:#d1d5db" style={{ fontSize: '12px' }} />
                   <YAxis stroke="#6b7280 dark:#d1d5db" style={{ fontSize: '12px' }} />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: '#fff dark:#1f2937', 
-                      border: '1px solid #e5e7eb dark:#374151', 
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#fff dark:#1f2937',
+                      border: '1px solid #e5e7eb dark:#374151',
                       borderRadius: '8px',
                       boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
                       color: '#111827 dark:#f9fafb'
@@ -625,8 +630,8 @@ export const Dashboard: React.FC = () => {
                   <defs>
                     {COLORS.map((color, index) => (
                       <linearGradient key={index} id={`gradient${index}`} x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={color} stopOpacity={1}/>
-                        <stop offset="100%" stopColor={color} stopOpacity={0.7}/>
+                        <stop offset="0%" stopColor={color} stopOpacity={1} />
+                        <stop offset="100%" stopColor={color} stopOpacity={0.7} />
                       </linearGradient>
                     ))}
                   </defs>
@@ -644,10 +649,10 @@ export const Dashboard: React.FC = () => {
                       <Cell key={`cell-${index}`} fill={`url(#gradient${index % COLORS.length})`} />
                     ))}
                   </Pie>
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: '#fff dark:#1f2937', 
-                      border: '1px solid #e5e7eb dark:#374151', 
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#fff dark:#1f2937',
+                      border: '1px solid #e5e7eb dark:#374151',
                       borderRadius: '8px',
                       boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
                       color: '#111827 dark:#f9fafb'
@@ -673,17 +678,17 @@ export const Dashboard: React.FC = () => {
                 <BarChart data={topProdutos} layout="vertical">
                   <defs>
                     <linearGradient id="colorBar" x1="0" y1="0" x2="1" y2="0">
-                      <stop offset="0%" stopColor="#6366f1" stopOpacity={1}/>
-                      <stop offset="100%" stopColor="#8b5cf6" stopOpacity={1}/>
+                      <stop offset="0%" stopColor="#6366f1" stopOpacity={1} />
+                      <stop offset="100%" stopColor="#8b5cf6" stopOpacity={1} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb dark:#374151" />
                   <XAxis type="number" stroke="#6b7280 dark:#d1d5db" style={{ fontSize: '12px' }} />
                   <YAxis dataKey="name" type="category" width={180} stroke="#6b7280 dark:#d1d5db" style={{ fontSize: '12px' }} />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: '#fff dark:#1f2937', 
-                      border: '1px solid #e5e7eb dark:#374151', 
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#fff dark:#1f2937',
+                      border: '1px solid #e5e7eb dark:#374151',
                       borderRadius: '8px',
                       boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
                       color: '#111827 dark:#f9fafb'
@@ -710,17 +715,17 @@ export const Dashboard: React.FC = () => {
                 <BarChart data={grupoData}>
                   <defs>
                     <linearGradient id="colorGrupo" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#8b5cf6" stopOpacity={1}/>
-                      <stop offset="100%" stopColor="#a78bfa" stopOpacity={1}/>
+                      <stop offset="0%" stopColor="#8b5cf6" stopOpacity={1} />
+                      <stop offset="100%" stopColor="#a78bfa" stopOpacity={1} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb dark:#374151" />
                   <XAxis dataKey="name" stroke="#6b7280 dark:#d1d5db" style={{ fontSize: '12px' }} />
                   <YAxis stroke="#6b7280 dark:#d1d5db" style={{ fontSize: '12px' }} />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: '#fff dark:#1f2937', 
-                      border: '1px solid #e5e7eb dark:#374151', 
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#fff dark:#1f2937',
+                      border: '1px solid #e5e7eb dark:#374151',
                       borderRadius: '8px',
                       boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
                       color: '#111827 dark:#f9fafb'
@@ -749,17 +754,16 @@ export const Dashboard: React.FC = () => {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
               {estadoData.map((estado, index) => (
-                <div 
-                  key={estado.name} 
+                <div
+                  key={estado.name}
                   className="relative group flex flex-col items-center p-6 bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-gray-800 dark:to-gray-700 rounded-xl hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border border-indigo-100 dark:border-gray-600"
                 >
                   <div className="absolute top-3 right-3">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white ${
-                      index === 0 ? 'bg-gradient-to-br from-yellow-400 to-orange-500' :
-                      index === 1 ? 'bg-gradient-to-br from-gray-300 to-gray-400' :
-                      index === 2 ? 'bg-gradient-to-br from-orange-400 to-amber-600' :
-                      'bg-gradient-to-br from-indigo-400 to-purple-500'
-                    }`}>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white ${index === 0 ? 'bg-gradient-to-br from-yellow-400 to-orange-500' :
+                        index === 1 ? 'bg-gradient-to-br from-gray-300 to-gray-400' :
+                          index === 2 ? 'bg-gradient-to-br from-orange-400 to-amber-600' :
+                            'bg-gradient-to-br from-indigo-400 to-purple-500'
+                      }`}>
                       #{index + 1}
                     </div>
                   </div>
@@ -767,7 +771,7 @@ export const Dashboard: React.FC = () => {
                   <div className="text-4xl font-extrabold text-gray-900 dark:text-white mb-1">{estado.value}</div>
                   <div className="text-sm font-medium text-gray-500 dark:text-gray-400">pedidos</div>
                   <div className="mt-3 w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2 overflow-hidden">
-                    <div 
+                    <div
                       className="bg-gradient-to-r from-indigo-500 to-purple-500 h-2 rounded-full transition-all duration-500"
                       style={{ width: `${(estado.value / estadoData[0].value) * 100}%` }}
                     ></div>

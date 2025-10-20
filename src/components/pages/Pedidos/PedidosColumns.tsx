@@ -31,7 +31,7 @@ interface Pedido {
   pedidosCompra: string;
 }
 
-// Função getStatusConfig atualizada
+// 🎨 FUNÇÃO getStatusConfig TOTALMENTE REFORMULADA COM CORES VIBRANTES
 export const getStatusConfig = (status: string) => {
   const config: {
     classes: string
@@ -45,38 +45,44 @@ export const getStatusConfig = (status: string) => {
 
   switch (status) {
     case "Aberto":
-      config.classes = "w-32 bg-yellow-100 text-yellow-800"
-      config.icon = <PackageOpen className="h-3 w-3 mr-1" />
+      config.classes = "w-32 bg-orange-100 border border-orange-200 text-orange-800"
+      config.icon = <PackageOpen className="h-3 w-3 mr-1 text-orange-600" />
       config.text = "Aberto"
       break
+    
     case "Fechado":
-      config.classes = "w-32 bg-green-100 text-green-800"
-      config.icon = <Package className="h-3 w-3 mr-1" />
+      config.classes = "w-32 bg-emerald-100 border border-emerald-200 text-emerald-800"
+      config.icon = <Package className="h-3 w-3 mr-1 text-emerald-600" />
       config.text = "Fechado"
       break
+    
     case "Cancelado":
-      config.classes = "w-32 bg-red-100 text-red-800"
-      config.icon = <Ban className="h-3 w-3 mr-1" />
+      config.classes = "w-32 bg-red-100 border border-red-200 text-red-800"
+      config.icon = <Ban className="h-3 w-3 mr-1 text-red-600" />
       config.text = "Cancelado"
       break
+    
     case "Liberado":
-      config.classes = "w-32 bg-blue-100 text-blue-800"
-      config.icon = <Check className="h-3 w-3 mr-1" />
+      config.classes = "w-32 bg-sky-100 border border-sky-200 text-sky-800"
+      config.icon = <Check className="h-3 w-3 mr-1 text-sky-600" />
       config.text = "Liberado"
       break
+    
     case "Picking eft.":
-      config.classes = "w-32 bg-purple-100 text-purple-800"
-      config.icon = <ShoppingCart className="h-3 w-3 mr-1" />
+      config.classes = "w-32 bg-violet-100 border border-violet-200 text-violet-800"
+      config.icon = <ShoppingCart className="h-3 w-3 mr-1 text-violet-600" />
       config.text = "Picking eft."
       break
+    
     case "Indisponível":
-      config.classes = "w-32 bg-red-200 text-gray-800"
-      config.icon = <AlertCircle className="h-3 w-3 mr-1" />
+      config.classes = "w-32 bg-amber-100 border border-amber-200 text-amber-800"
+      config.icon = <AlertCircle className="h-3 w-3 mr-1 text-amber-600" />
       config.text = "Indisponível"
       break
+    
     default:
-      config.classes = "w-32 bg-amber-200 text-gray-800"
-      config.icon = <PackageSearch className="h-3 w-3 mr-1" />
+      config.classes = "w-32 bg-gray-100 border border-gray-200 text-gray-800"
+      config.icon = <PackageSearch className="h-3 w-3 mr-1 text-gray-600" />
       config.text = status || "Pendente"
   }
 
@@ -369,7 +375,6 @@ startxref
         )
       },
     },
-    // ... existing code for other columns ...
     {
       accessorKey: "pedidosCompra",
       header: "Pedidos Compra",
@@ -379,7 +384,6 @@ startxref
         return <PedidosCompraCell pedidos={pedidos} />
       },
     },
-    // ... existing date columns remain the same ...
     {
       accessorKey: "dataLancamentoPedido",
       header: "Data Lanç.",
@@ -475,7 +479,7 @@ startxref
       cell: ({ row }) => {
         const { classes, icon, text } = getStatusConfig(row.getValue("statusDoPedido"))
         return (
-          <div className={`w-full inline-flex items-center px-2 py-2 rounded-full text-xs font-medium ${classes}`}>
+          <div className={`w-full inline-flex items-center px-3 py-2 rounded-full text-xs font-semibold shadow-sm ${classes}`}>
             {icon}
             {text || row.getValue("statusDoPedido")}
           </div>
@@ -488,9 +492,9 @@ startxref
       cell: ({ row }) => {
         const { classes, icon, text } = getStatusConfig(row.getValue("statusPicking"))
         return (
-          <div className={`w-full inline-flex items-center px-2 py-2 rounded-full text-xs font-medium ${classes}`}>
+          <div className={`w-full inline-flex items-center px-3 py-2 rounded-full text-xs font-semibold shadow-sm ${classes}`}>
             {icon}
-            {text || row.getValue("statusDoPedido")}
+            {text || row.getValue("statusPicking")}
           </div>
         )
       },
@@ -586,7 +590,7 @@ startxref
         <vBCST>0.00</vBCST>
         <vST>0.00</vST>
         <vProd>100.00</vProd>
-        <vFrete>0.00</vFrete>
+        <vFreite>0.00</vFreite>
         <vSeg>0.00</vSeg>
         <vDesc>0.00</vDesc>
         <vII>0.00</vII>
@@ -952,7 +956,6 @@ startxref
         )
       },
     },
-    // ... existing columns remain the same ...
     {
       accessorKey: "nomeCliente",
       header: "Cliente",
