@@ -1,5 +1,6 @@
 import { parseDate } from "@/utils/boletos/formatters";
 import type { ReactNode } from "react";
+import { AlertCircle, Ban, Check, Package, PackageOpen, PackageSearch } from "lucide-react";
 
 interface StatusBadgeProps {
   status: string;
@@ -8,91 +9,30 @@ interface StatusBadgeProps {
 }
 
 interface StatusConfig {
-  color: string;
-  label: string;
-  icon: ReactNode | null;
+  classes: string;
+  icon: ReactNode;
+  text: string;
 }
 
-const icons = {
-  paid: (
-    <svg
-      className="w-4 h-4 mr-1"
-      fill="currentColor"
-      viewBox="0 0 20 20"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        fillRule="evenodd"
-        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-        clipRule="evenodd"
-      ></path>
-    </svg>
-  ),
-  pending: (
-    <svg
-      className="w-4 h-4 mr-1"
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-      ></path>
-    </svg>
-  ),
-  overdue: (
-    <svg
-      className="w-4 h-4 mr-1"
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-      ></path>
-    </svg>
-  ),
-  canceled: (
-    <svg
-      className="w-4 h-4 mr-1"
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M6 18L18 6M6 6l12 12"
-      ></path>
-    </svg>
-  ),
-};
+const statusPagamentoOptions = ["Pago", "Pendente", "Atrasado", "Cancelado"];
+const situacaoOptions = ["Normal", "Urgente", "Bloqueado", "Regular"];
+const statusOptions = ["Ativo", "Inativo", "Processando", "Concluído"];
 
 export const StatusBadge = ({
   status,
   dataPagamento,
   dataVencimento,
 }: StatusBadgeProps) => {
-  const statusConfig = getStatusConfig(status, dataPagamento, dataVencimento);
+  const { classes, icon, text } = getStatusConfig(status, dataPagamento, dataVencimento);
 
   return (
-    <div className="flex justify-start">
+    <div className="w-full inline-flex items-center justify-start">
       <span
-        className={`w-24 py-1 pl-3 rounded-md text-xs font-medium flex items-center justify-start ${statusConfig.color}`}
-        aria-label={`Status: ${statusConfig.label}`}
+        className={`w-36 px-3 py-2 rounded-full text-xs font-semibold shadow-sm ${classes}`}
+        aria-label={`Status: ${text}`}
       >
-        {statusConfig.icon}
-        {statusConfig.label}
+        {icon}
+        {text}
       </span>
     </div>
   );
@@ -105,67 +45,132 @@ const getStatusConfig = (
 ): StatusConfig => {
   const statusLower = status?.toLowerCase() || "";
   let config: StatusConfig = {
-    color: "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300",
-    label: status || "N/A",
-    icon: null,
+    classes: "bg-gray-100 border border-gray-200 text-gray-800 ",
+    icon: <PackageSearch className="h-3 w-3 mr-1 text-gray-600" />,
+    text: status || "Desconhecido",
   };
 
   const vencimento = parseDate(dataVencimento);
   if (!vencimento) {
     return {
-      color: "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300",
-      label: "Data Inválida",
-      icon: null,
+      classes: "bg-gray-100 border border-gray-200 text-gray-800",
+      icon: <AlertCircle className="h-3 w-3 mr-1 text-gray-600" />,
+      text: "Data Inválida",
     };
   }
 
-  switch (statusLower) {
-    case "baixado":
-    case "pago":
-      config = {
-        color:
-          "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-        label: "Pago",
-        icon: icons.paid,
-      };
-      break;
-    case "gerado":
-    case "rejeitado":
-    case "confirmado":
-    case "remessa":
-    case "pendente":
-      const hoje = new Date();
-      hoje.setHours(0, 0, 0, 0);
+  if (statusPagamentoOptions.map(s => s.toLowerCase()).includes(statusLower)) {
+    switch (statusLower) {
+      case "pago":
+        config = {
+          classes: "bg-green-100 border border-green-200 text-green-800",
+          icon: <Check className="h-3 w-3 mr-1 text-green-600" />,
+          text: "Pago",
+        };
+        break;
+      case "pendente":
+        config = {
+          classes: "bg-orange-100 border border-orange-200 text-orange-800",
+          icon: <PackageOpen className="h-3 w-3 mr-1 text-orange-600" />,
+          text: "Pendente",
+        };
+        break;
+      case "atrasado":
+        config = {
+          classes: "bg-red-100 border border-red-200 text-red-800",
+          icon: <AlertCircle className="h-3 w-3 mr-1 text-red-600" />,
+          text: "Atrasado",
+        };
+        break;
+      case "cancelado":
+        config = {
+          classes: "bg-red-100 border border-red-200 text-red-800",
+          icon: <Ban className="h-3 w-3 mr-1 text-red-600" />,
+          text: "Cancelado",
+        };
+        break;
+    }
+  } else if (situacaoOptions.map(s => s.toLowerCase()).includes(statusLower)) {
+    switch (statusLower) {
+      case "normal":
+        config = {
+          classes: "bg-blue-100 border border-blue-200 text-blue-800",
+          icon: <Package className="h-3 w-3 mr-1 text-blue-600" />,
+          text: "Normal",
+        };
+        break;
+      case "urgente":
+        config = {
+          classes: "bg-orange-100 border border-orange-200 text-orange-800",
+          icon: <AlertCircle className="h-3 w-3 mr-1 text-orange-600" />,
+          text: "Urgente",
+        };
+        break;
+      case "bloqueado":
+        config = {
+          classes: "bg-red-100 border border-red-200 text-red-800",
+          icon: <Ban className="h-3 w-3 mr-1 text-red-600" />,
+          text: "Bloqueado",
+        };
+        break;
+      case "regular":
+        config = {
+          classes: "bg-teal-100 border border-teal-200 text-teal-800",
+          icon: <Check className="h-3 w-3 mr-1 text-teal-600" />,
+          text: "Regular",
+        };
+        break;
+    }
+  } else if (statusOptions.map(s => s.toLowerCase()).includes(statusLower)) {
+    switch (statusLower) {
+      case "ativo":
+        config = {
+          classes: "bg-green-100 border border-green-200 text-green-800",
+          icon: <Check className="h-3 w-3 mr-1 text-green-600" />,
+          text: "Ativo",
+        };
+        break;
+      case "inativo":
+        config = {
+          classes: "bg-red-400 border border-gray-200 text-red-100",
+          icon: <Ban className="h-3 w-3 mr-1 text-red-100" />,
+          text: "Inativo",
+        };
+        break;
+      case "processando":
+        config = {
+          classes: "bg-yellow-100 border border-yellow-200 text-yellow-800",
+          icon: <PackageOpen className="h-3 w-3 mr-1 text-yellow-600" />,
+          text: "Processando",
+        };
+        break;
+      case "concluído":
+        config = {
+          classes: "bg-emerald-100 border border-emerald-200 text-emerald-800",
+          icon: <Check className="h-3 w-3 mr-1 text-emerald-600" />,
+          text: "Concluído",
+        };
+        break;
+    }
+  } else {
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
 
+    if (["gerado", "rejeitado", "confirmado", "remessa", "pendente"].includes(statusLower)) {
       if (vencimento < hoje && !dataPagamento) {
         config = {
-          color: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
-          label: "Atrasado",
-          icon: icons.overdue,
+          classes: "bg-red-100 border border-red-200 text-red-800",
+          icon: <AlertCircle className="h-3 w-3 mr-1 text-red-600" />,
+          text: "Atrasado",
         };
       } else {
         config = {
-          color:
-            "bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-200",
-          label: "Pendente",
-          icon: icons.pending,
+          classes: "bg-orange-100 border border-orange-200 text-orange-800",
+          icon: <PackageOpen className="h-3 w-3 mr-1 text-orange-600" />,
+          text: "Pendente",
         };
       }
-      break;
-    case "atrasado":
-      config = {
-        color: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
-        label: "Atrasado",
-        icon: icons.overdue,
-      };
-      break;
-    case "cancelado":
-      config = {
-        color: "bg-red-200 text-gray-800 dark:bg-gray-700 dark:text-gray-300",
-        label: "Cancelado",
-        icon: icons.canceled,
-      };
-      break;
+    }
   }
 
   return config;

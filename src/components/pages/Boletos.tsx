@@ -1,4 +1,5 @@
-// Boletos.tsx
+"use client";
+
 import * as React from "react";
 import {
   flexRender,
@@ -64,11 +65,31 @@ const generateMockParcelas = (count: number = 50): Parcela[] => {
   return Array.from({ length: count }, (_, i) => {
     const numParcelas = Math.floor(Math.random() * 12) + 1;
     const parcelaAtual = Math.floor(Math.random() * numParcelas) + 1;
+    const statusPagamento = statusPagamentoOptions[Math.floor(Math.random() * statusPagamentoOptions.length)];
+    const status = statusOptions[Math.floor(Math.random() * statusOptions.length)];
+    const vencimentoDate = new Date(Date.now() + Math.random() * 60 * 24 * 60 * 60 * 1000);
+
+    // Lógica para gerar dataPagamento com base no statusPagamento e status
+    let dataPagamento = "";
+    if (statusPagamento === "Pago") {
+      // Para "Pago", a data de pagamento é antes ou igual à data de vencimento
+      const daysBeforeDue = Math.floor(Math.random() * 10); // Até 10 dias antes
+      const paymentDate = new Date(vencimentoDate.getTime() - daysBeforeDue * 24 * 60 * 60 * 1000);
+      dataPagamento = paymentDate.toISOString().split("T")[0];
+    } else if (statusPagamento === "Atrasado" && Math.random() > 0.3) {
+      // Para "Atrasado", 70% de chance de ter uma data de pagamento após o vencimento
+      const daysAfterDue = Math.floor(Math.random() * 15) + 1; // 1 a 15 dias após
+      const paymentDate = new Date(vencimentoDate.getTime() + daysAfterDue * 24 * 60 * 60 * 1000);
+      dataPagamento = paymentDate.toISOString().split("T")[0];
+    } else if (status === "Inativo" && Math.random() > 0.5) {
+      // Para "Inativo", 50% de chance de ter uma data de pagamento
+      const paymentDate = new Date(vencimentoDate.getTime() - Math.floor(Math.random() * 20) * 24 * 60 * 60 * 1000);
+      dataPagamento = paymentDate.toISOString().split("T")[0];
+    }
 
     return {
       id: i + 1,
-      statusPagamento:
-        statusPagamentoOptions[Math.floor(Math.random() * statusPagamentoOptions.length)],
+      statusPagamento,
       situacao: situacaoOptions[Math.floor(Math.random() * situacaoOptions.length)],
       codigoBoleto: Math.floor(Math.random() * 1000000) + 100000,
       codigoPN: `PN${String(i + 1).padStart(4, "0")}`,
@@ -81,16 +102,9 @@ const generateMockParcelas = (count: number = 50): Parcela[] => {
       numNF: `NF${String(Math.floor(Math.random() * 10000)).padStart(6, "0")}`,
       parcela: `${parcelaAtual}/${numParcelas}`,
       valorParcela: parseFloat((Math.random() * 5000 + 100).toFixed(2)),
-      dataVencimento: new Date(Date.now() + Math.random() * 60 * 24 * 60 * 60 * 1000)
-        .toISOString()
-        .split("T")[0],
-      dataPagamento:
-        Math.random() > 0.7
-          ? new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000)
-              .toISOString()
-              .split("T")[0]
-          : "",
-      status: statusOptions[Math.floor(Math.random() * statusOptions.length)],
+      dataVencimento: vencimentoDate.toISOString().split("T")[0],
+      dataPagamento,
+      status,
       filial: filialOptions[Math.floor(Math.random() * filialOptions.length)],
       chaveNFe: `NFe${Math.floor(Math.random() * 100000000000000000)}`.padStart(44, "0"),
       statusNotaFiscal: Math.random() > 0.5 ? "Aprovada" : "Pendente",
@@ -156,18 +170,15 @@ export const Boletos: React.FC = () => {
 
   // Manipulador para a busca
   const handleSearch = useCallback((value: string, type: string) => {
-    // Limpa todos os filtros
     table.getAllColumns().forEach((column) => column.setFilterValue(""));
-    
     if (value && type) {
       const column = table.getColumn(type);
       if (column) column.setFilterValue(value);
     }
-    
-    table.setPageIndex(0); // ✅ Automático!
+    table.setPageIndex(0);
   }, [table]);
 
-  // ✅ FILTRO ESPECIAL PARA DATA (Range)
+  // FILTRO ESPECIAL PARA DATA (Range)
   useEffect(() => {
     const column = table.getColumn("dataVencimento");
     if (!column) return;
@@ -175,7 +186,7 @@ export const Boletos: React.FC = () => {
     const filterValue = column.getFilterValue();
     if (typeof filterValue === "string" && filterValue.includes("|")) {
       const [start, end] = filterValue.split("|").map(d => new Date(d));
-      column.setFilterValue([start, end]); // ✅ Array para range
+      column.setFilterValue([start, end]);
     }
   }, [table]);
 
@@ -325,13 +336,18 @@ export const Boletos: React.FC = () => {
         {table.getRowModel().rows?.length ? (
           table.getRowModel().rows.map((row) => {
             const parcela = row.original as Parcela;
+            const isInativo = parcela.status.toLowerCase() === "inativo";
+            const textClass = isInativo ? "text-red-500" : "dark:text-gray-200";
+
             return (
               <Card key={row.id} className="w-full">
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <div className="flex flex-col">
                       <span className="text-sm font-medium text-muted-foreground">Boleto</span>
-                      <span className="text-lg font-semibold">#{parcela.codigoBoleto}</span>
+                      <span className={`text-lg font-semibold ${textClass}`}>
+                        #{parcela.codigoBoleto}
+                      </span>
                     </div>
                     <Badge
                       variant={
@@ -362,6 +378,14 @@ export const Boletos: React.FC = () => {
                       <span className="text-muted-foreground">Vencimento:</span>
                       <p className="font-medium">
                         {format(new Date(parcela.dataVencimento), "dd/MM/yyyy")}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Data Pagamento:</span>
+                      <p className={`font-medium ${textClass}`}>
+                        {parcela.dataPagamento
+                          ? format(new Date(parcela.dataPagamento), "dd/MM/yyyy")
+                          : "-"}
                       </p>
                     </div>
                     <div>

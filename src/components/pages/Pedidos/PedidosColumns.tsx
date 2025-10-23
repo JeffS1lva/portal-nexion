@@ -1,109 +1,142 @@
-"use client"
+"use client";
 
-import type * as React from "react"
-import type { ColumnDef, FilterFn } from "@tanstack/react-table"
-import { AlertCircle, Ban, Check, Circle, Eye, Package, PackageOpen, PackageSearch, ShoppingCart } from "lucide-react"
-import { toast } from "sonner"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import type { JSX } from "react/jsx-runtime" // Import JSX to declare JSX.Element
-import { PedidosCompraCell } from "./PedidosCompras/PedidosModal"
+import type * as React from "react";
+import type { ColumnDef, FilterFn } from "@tanstack/react-table";
+import { AlertCircle, Ban, Check, Eye, Package, PackageOpen, PackageSearch } from "lucide-react";
+import { toast } from "sonner";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import type { JSX } from "react/jsx-runtime";
+import { PedidosCompraCell } from "./PedidosCompras/PedidosModal";
 
 interface Pedido {
-  duplicateCount: React.ReactNode
-  hasDuplicates: any
-  status: any
-  grupo: string
-  filial: string
-  codigoTransportadora: string
-  nomeTransportadora: string | null
-  estado: string
-  codigoDoCliente: string
-  nomeCliente: string
-  numeroPedido: string
-  dataLancamentoPedido: string
-  dataParaEntrega: string
-  statusDoPedido: string
-  dataPicking: string
-  statusPicking: string
-  notaFiscal: string
-  chaveNFe: string
-  statusNotaFiscal?: string // Nova propriedade adicionada
+  duplicateCount: React.ReactNode;
+  hasDuplicates: any;
+  status: any;
+  grupo: string;
+  filial: string;
+  codigoTransportadora: string;
+  nomeTransportadora: string | null;
+  estado: string;
+  codigoDoCliente: string;
+  nomeCliente: string;
+  numeroPedido: string;
+  dataLancamentoPedido: string;
+  dataParaEntrega: string;
+  statusDoPedido: string;
+  dataPicking: string;
+  statusPicking: string;
+  notaFiscal: string;
+  chaveNFe: string;
+  statusNotaFiscal?: string;
   pedidosCompra: string;
 }
 
-// 🎨 FUNÇÃO getStatusConfig TOTALMENTE REFORMULADA COM CORES VIBRANTES
+// 🎨 FUNÇÃO getStatusConfig (mantida como fornecida anteriormente)
 export const getStatusConfig = (status: string) => {
   const config: {
-    classes: string
-    icon: JSX.Element
-    text: string
+    classes: string;
+    icon: JSX.Element;
+    text: string;
   } = {
-    classes: "",
-    icon: <Circle className="h-3 w-3 mr-1" />,
-    text: status, // Valor padrão é o próprio status recebido
-  }
+    classes: "w-32 bg-gray-100 border border-gray-200 text-gray-800",
+    icon: <PackageSearch className="h-3 w-3 mr-1 text-gray-600" />,
+    text: status || "Desconhecido",
+  };
 
   switch (status) {
-    case "Aberto":
-      config.classes = "w-32 bg-orange-100 border border-orange-200 text-orange-800"
-      config.icon = <PackageOpen className="h-3 w-3 mr-1 text-orange-600" />
-      config.text = "Aberto"
-      break
-    
-    case "Fechado":
-      config.classes = "w-32 bg-emerald-100 border border-emerald-200 text-emerald-800"
-      config.icon = <Package className="h-3 w-3 mr-1 text-emerald-600" />
-      config.text = "Fechado"
-      break
-    
+    // Status do Pedido
+    case "Pendente Ativação":
+      config.classes = "w-32 bg-orange-100 border border-orange-200 text-orange-800";
+      config.icon = <PackageOpen className="h-3 w-3 mr-1 text-orange-600" />;
+      config.text = "Pendente Ativação";
+      break;
+
+    case "Ativado":
+      config.classes = "w-32 bg-green-100 border border-green-200 text-green-800";
+      config.icon = <Check className="h-3 w-3 mr-1 text-green-600" />;
+      config.text = "Ativado";
+      break;
+
+    case "Renovado":
+      config.classes = "w-32 bg-blue-100 border border-blue-200 text-blue-800";
+      config.icon = <Package className="h-3 w-3 mr-1 text-blue-600" />;
+      config.text = "Renovado";
+      break;
+
     case "Cancelado":
-      config.classes = "w-32 bg-red-100 border border-red-200 text-red-800"
-      config.icon = <Ban className="h-3 w-3 mr-1 text-red-600" />
-      config.text = "Cancelado"
-      break
-    
-    case "Liberado":
-      config.classes = "w-32 bg-sky-100 border border-sky-200 text-sky-800"
-      config.icon = <Check className="h-3 w-3 mr-1 text-sky-600" />
-      config.text = "Liberado"
-      break
-    
-    case "Picking eft.":
-      config.classes = "w-32 bg-violet-100 border border-violet-200 text-violet-800"
-      config.icon = <ShoppingCart className="h-3 w-3 mr-1 text-violet-600" />
-      config.text = "Picking eft."
-      break
-    
-    case "Indisponível":
-      config.classes = "w-32 bg-amber-100 border border-amber-200 text-amber-800"
-      config.icon = <AlertCircle className="h-3 w-3 mr-1 text-amber-600" />
-      config.text = "Indisponível"
-      break
-    
+      config.classes = "w-32 bg-red-100 border border-red-200 text-red-800";
+      config.icon = <Ban className="h-3 w-3 mr-1 text-red-600" />;
+      config.text = "Cancelado";
+      break;
+
+    // Status do Picking
+    case "Configuração Pendente":
+      config.classes = "w-32 bg-yellow-100 border border-yellow-200 text-yellow-800";
+      config.icon = <AlertCircle className="h-3 w-3 mr-1 text-yellow-600" />;
+      config.text = "Config. Pendente";
+      break;
+
+    case "Configurado":
+      config.classes = "w-32 bg-teal-100 border border-teal-200 text-teal-800";
+      config.icon = <Package className="h-3 w-3 mr-1 text-teal-600" />;
+      config.text = "Configurado";
+      break;
+
+    case "Pendente":
+      config.classes = "w-32 bg-amber-100 border border-amber-200 text-amber-800";
+      config.icon = <PackageOpen className="h-3 w-3 mr-1 text-amber-600" />;
+      config.text = "Pendente";
+      break;
+
+    case "Concluído":
+      config.classes = "w-32 bg-emerald-100 border border-emerald-200 text-emerald-800";
+      config.icon = <Check className="h-3 w-3 mr-1 text-emerald-600" />;
+      config.text = "Concluído";
+      break;
+
+    // Status da Nota Fiscal
+    case "Autorizada":
+      config.classes = "w-32 bg-sky-100 border border-sky-200 text-sky-800";
+      config.icon = <Check className="h-3 w-3 mr-1 text-sky-600" />;
+      config.text = "Autorizada";
+      break;
+
+    case "Cancelada":
+      config.classes = "w-32 bg-red-100 border border-red-200 text-red-800";
+      config.icon = <Ban className="h-3 w-3 mr-1 text-red-600" />;
+      config.text = "Cancelada";
+      break;
+
+    case "Pendente":
+      config.classes = "w-32 bg-orange-100 border border-orange-200 text-orange-800";
+      config.icon = <AlertCircle className="h-3 w-3 mr-1 text-orange-600" />;
+      config.text = "Pendente";
+      break;
+
     default:
-      config.classes = "w-32 bg-gray-100 border border-gray-200 text-gray-800"
-      config.icon = <PackageSearch className="h-3 w-3 mr-1 text-gray-600" />
-      config.text = status || "Pendente"
+      config.classes = "w-32 bg-gray-100 border border-gray-200 text-gray-800";
+      config.icon = <PackageSearch className="h-3 w-3 mr-1 text-gray-600" />;
+      config.text = status || "Desconhecido";
   }
 
-  return config
-}
+  return config;
+};
 
 export const numericFilter: FilterFn<Pedido> = (row, columnId, filterValue) => {
-  const value = row.getValue(columnId)
+  const value = row.getValue(columnId);
   if (typeof value === "string" || typeof value === "number") {
-    return value.toString().includes(filterValue)
+    return value.toString().includes(filterValue);
   }
-  return false
-}
+  return false;
+};
 
 export const pedidosCompraFilter: FilterFn<Pedido> = (row, columnId, filterValue) => {
-  const value = row.getValue(columnId)
+  const value = row.getValue(columnId);
   if (typeof value === "string") {
-    return value.toLowerCase().includes(filterValue.toLowerCase())
+    return value.toLowerCase().includes(filterValue.toLowerCase());
   }
-  return false
-}
+  return false;
+};
 
 export const usePedidosColumns = (): ColumnDef<Pedido>[] => {
   return [
@@ -112,23 +145,19 @@ export const usePedidosColumns = (): ColumnDef<Pedido>[] => {
       header: "Nº Pedido",
       filterFn: numericFilter,
       cell: ({ row }) => {
-        const numeroPedido = row.getValue("numeroPedido")
-
-        const hasNotaFiscal = numeroPedido !== null && numeroPedido !== undefined && numeroPedido !== ""
+        const numeroPedido = row.getValue("numeroPedido");
+        const hasNotaFiscal = numeroPedido !== null && numeroPedido !== undefined && numeroPedido !== "";
 
         const handleViewPedido = async (e: React.MouseEvent) => {
-          e.preventDefault()
-
-          if (!hasNotaFiscal) return
+          e.preventDefault();
+          if (!hasNotaFiscal) return;
 
           try {
-            const pedidoId = numeroPedido.toString()
-            const loadingId = `loading-pedido-${pedidoId}`
-
-            // Loading aprimorado com o mesmo estilo do boleto
-            const loadingEl = document.createElement("div")
-            loadingEl.id = loadingId
-            loadingEl.className = "fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50"
+            const pedidoId = numeroPedido.toString();
+            const loadingId = `loading-pedido-${pedidoId}`;
+            const loadingEl = document.createElement("div");
+            loadingEl.id = loadingId;
+            loadingEl.className = "fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50";
             loadingEl.innerHTML = `
               <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 flex flex-col items-center max-w-md">
                 <div class="relative mb-4">
@@ -140,12 +169,11 @@ export const usePedidosColumns = (): ColumnDef<Pedido>[] => {
                 <p class="font-medium text-gray-900 dark:text-white">Carregando Pedido de Venda... </p>
                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Aguarde um momento</p>
               </div>
-            `
-            document.body.appendChild(loadingEl)
+            `;
+            document.body.appendChild(loadingEl);
 
-            await new Promise((resolve) => setTimeout(resolve, 1500))
+            await new Promise((resolve) => setTimeout(resolve, 1500));
 
-            // Create a fictional PDF blob
             const pdfContent = `%PDF-1.4
 1 0 obj
 <<
@@ -198,25 +226,18 @@ trailer
 >>
 startxref
 299
-%%EOF`
+%%EOF`;
 
-            const blob = new Blob([pdfContent], { type: "application/pdf" })
-            const fileUrl = URL.createObjectURL(blob)
+            const blob = new Blob([pdfContent], { type: "application/pdf" });
+            const fileUrl = URL.createObjectURL(blob);
+            document.getElementById(loadingId)?.remove();
 
-            document.getElementById(loadingId)?.remove()
-
-            
-
-            // Nova interface do visualizador seguindo o padrão dos boletos
-            const viewerContainer = document.createElement("div")
-            viewerContainer.id = `pedido-viewer-${pedidoId}`
+            const viewerContainer = document.createElement("div");
+            viewerContainer.id = `pedido-viewer-${pedidoId}`;
             viewerContainer.className =
-              "fixed inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center z-50"
-
-            // ... existing viewer HTML code ...
+              "fixed inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center z-50";
             viewerContainer.innerHTML = `
               <div class="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] h-full flex flex-col overflow-hidden border border-gray-200 dark:border-gray-800 transition-all duration-300 opacity-0 scale-95" id="viewer-container-${pedidoId}">
-                <!-- Cabeçalho com gradiente -->
                 <div class="bg-gradient-to-r from-sky-900 to-zinc-800 p-5 text-white">
                   <div class="flex items-center justify-between">
                     <div class="flex items-center">
@@ -244,18 +265,26 @@ startxref
                     </div>
                   </div>
                 </div>
-                
-                <!-- Área do conteúdo -->
                 <div class="flex-1 overflow-hidden bg-gray-50 dark:bg-gray-900 relative" id="iframe-container-${pedidoId}">
-                  <!-- Gradiente superior -->
                   <div class="absolute top-0 left-0 right-0 h-6 bg-gradient-to-b from-slate-400 dark:from-gray-800 to-transparent z-10"></div>
-                  
-                  <!-- O iframe ou embed será inserido aqui via JavaScript -->
                   <div id="pdf-content-${pedidoId}" class="w-full h-full">
-                    <!-- Conteúdo inserido via JavaScript -->
+                    <div class="w-full h-full flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-800">
+                      <div class="text-center max-w-md p-6">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="mx-auto mb-4 text-blue-500"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                        <h3 class="text-xl font-bold mb-2 text-gray-900 dark:text-white">Pedido Fictício #${pedidoId}</h3>
+                        <p class="text-gray-600 dark:text-gray-300 mb-4">Este é um documento de demonstração com dados fictícios.</p>
+                        <div class="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-lg text-left">
+                          <h4 class="font-semibold text-blue-900 dark:text-blue-100 mb-2">Informações do Pedido:</h4>
+                          <ul class="text-sm text-blue-800 dark:text-blue-200 space-y-1">
+                            <li>• Número: ${pedidoId}</li>
+                            <li>• Status: Processando</li>
+                            <li>• Data: ${new Date().toLocaleDateString("pt-BR")}</li>
+                            <li>• Tipo: Demonstração</li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  
-                  <!-- Barra de informações inferior -->
                   <div class="absolute bottom-0 left-0 right-0 bg-white/90 dark:bg-gray-900/90 border-t border-gray-200 dark:border-gray-800 py-2 px-4 flex items-center justify-between backdrop-blur-sm z-10">
                     <div class="flex items-center text-sm text-gray-600 dark:text-gray-300">
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="h-4 w-4 mr-2 text-green-500"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
@@ -267,87 +296,54 @@ startxref
                   </div>
                 </div>
               </div>
-            `
+            `;
+            document.body.appendChild(viewerContainer);
 
-            document.body.appendChild(viewerContainer)
-
-            // Renderizar o PDF baseado no dispositivo
-            const pdfContentElement = document.getElementById(`pdf-content-${pedidoId}`)
-
-            if (pdfContentElement) {
-              // Show a message that this is fictional data
-              pdfContentElement.innerHTML = `
-                <div class="w-full h-full flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-800">
-                  <div class="text-center max-w-md p-6">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="mx-auto mb-4 text-blue-500"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                    <h3 class="text-xl font-bold mb-2 text-gray-900 dark:text-white">Pedido Fictício #${pedidoId}</h3>
-                    <p class="text-gray-600 dark:text-gray-300 mb-4">Este é um documento de demonstração com dados fictícios.</p>
-                    <div class="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-lg text-left">
-                      <h4 class="font-semibold text-blue-900 dark:text-blue-100 mb-2">Informações do Pedido:</h4>
-                      <ul class="text-sm text-blue-800 dark:text-blue-200 space-y-1">
-                        <li>• Número: ${pedidoId}</li>
-                        <li>• Status: Processando</li>
-                        <li>• Data: ${new Date().toLocaleDateString("pt-BR")}</li>
-                        <li>• Tipo: Demonstração</li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              `
-            }
-
-            // ... existing animation and event handling code ...
             setTimeout(() => {
-              const viewerEl = document.getElementById(`viewer-container-${pedidoId}`)
+              const viewerEl = document.getElementById(`viewer-container-${pedidoId}`);
               if (viewerEl) {
-                viewerEl.classList.remove("opacity-0", "scale-95")
-                viewerEl.classList.add("opacity-100", "scale-100")
+                viewerEl.classList.remove("opacity-0", "scale-95");
+                viewerEl.classList.add("opacity-100", "scale-100");
               }
-            }, 50)
+            }, 50);
 
-            // Adicionar evento de fechamento com animação de saída
             document.getElementById(`close-viewer-${pedidoId}`)?.addEventListener("click", () => {
-              const viewerElement = document.getElementById(`viewer-container-${pedidoId}`)
+              const viewerElement = document.getElementById(`viewer-container-${pedidoId}`);
               if (viewerElement) {
-                // Animar saída
-                viewerElement.classList.remove("opacity-100", "scale-100")
-                viewerElement.classList.add("opacity-0", "scale-95")
-
-                // Remover após animação
+                viewerElement.classList.remove("opacity-100", "scale-100");
+                viewerElement.classList.add("opacity-0", "scale-95");
                 setTimeout(() => {
-                  const containerElement = document.getElementById(`pedido-viewer-${pedidoId}`)
+                  const containerElement = document.getElementById(`pedido-viewer-${pedidoId}`);
                   if (containerElement) {
-                    containerElement.remove()
+                    containerElement.remove();
                   }
-                  URL.revokeObjectURL(fileUrl)
-                }, 300)
+                  URL.revokeObjectURL(fileUrl);
+                }, 300);
               } else {
-                // Fallback se o elemento não for encontrado
-                const containerElement = document.getElementById(`pedido-viewer-${pedidoId}`)
+                const containerElement = document.getElementById(`pedido-viewer-${pedidoId}`);
                 if (containerElement) {
-                  containerElement.remove()
+                  containerElement.remove();
                 }
-                URL.revokeObjectURL(fileUrl)
+                URL.revokeObjectURL(fileUrl);
               }
-            })
+            });
 
             toast.success(`Pedido fictício ${pedidoId} carregado!`, {
               description: "Documento de demonstração gerado com sucesso.",
               duration: 3000,
-            })
+            });
           } catch (error) {
-            const loadingId = `loading-pedido-${numeroPedido}`
-            document.getElementById(loadingId)?.remove()
-
+            const loadingId = `loading-pedido-${numeroPedido}`;
+            document.getElementById(loadingId)?.remove();
             toast.error("Erro ao carregar pedido fictício", {
               description: "Não foi possível gerar o documento de demonstração.",
-            })
+            });
           }
-        }
+        };
 
         return (
           <div className="flex items-center gap-2">
-            <span className="block text-center font-medium min-w-[50px]">
+            <span className="block text-center font-medium min-w-[70px]">
               {hasNotaFiscal ? numeroPedido.toString() : "N/A"}
             </span>
             <div className="flex gap-1">
@@ -372,131 +368,107 @@ startxref
               </TooltipProvider>
             </div>
           </div>
-        )
+        );
       },
     },
     {
       accessorKey: "pedidosCompra",
       header: "Pedidos Compra",
-      filterFn: pedidosCompraFilter, // Added custom filter function
+      filterFn: pedidosCompraFilter,
       cell: ({ row }) => {
-        const pedidos = row.getValue("pedidosCompra") as string
-        return <PedidosCompraCell pedidos={pedidos} />
+        const pedidos = row.getValue("pedidosCompra") as string;
+        return <PedidosCompraCell pedidos={pedidos} />;
       },
     },
     {
       accessorKey: "dataLancamentoPedido",
       header: "Data Lanç.",
       cell: ({ row }) => {
-        const dateValue = row.getValue("dataLancamentoPedido")
-        if (!dateValue) return ""
-        // Usar split para preservar a data exata sem ajuste de timezone
-        const dateString = String(dateValue)
-        const [year, month, day] = dateString.split("-")
-        return `${day}/${month}/${year}` // Formato DD/MM/YYYY
+        const dateValue = row.getValue("dataLancamentoPedido");
+        if (!dateValue) return "";
+        const dateString = String(dateValue);
+        const [year, month, day] = dateString.split("-");
+        return `${day}/${month}/${year}`;
       },
       filterFn: (row, columnId, filterValue) => {
-        // Se não temos valores de filtro, mostrar todos os resultados
-        if (!filterValue?.start || !filterValue?.end) return true
-
-        const dateValue = row.getValue(columnId)
-        if (!dateValue) return false
-
-        // Garantir que estamos trabalhando com uma string
-        const dateString = String(dateValue)
-
-        // Parse direto da string de data no formato YYYY-MM-DD
-        const [cellYear, cellMonth, cellDay] = dateString.split("-").map(Number)
-
-        // Parse direto das strings de filtro no formato YYYY-MM-DD
-        const [startYear, startMonth, startDay] = filterValue.start.split("-").map(Number)
-
-        const [endYear, endMonth, endDay] = filterValue.end.split("-").map(Number)
-
-        // Verificar se a data da célula está entre as datas de filtro
-        // YYYY comparação
-        if (cellYear < startYear || cellYear > endYear) return false
-
-        // Mesmo ano, verificar mês
-        if (cellYear === startYear && cellMonth < startMonth) return false
-        if (cellYear === endYear && cellMonth > endMonth) return false
-
-        // Mesmo ano e mês, verificar dia
-        if (cellYear === startYear && cellMonth === startMonth && cellDay < startDay) return false
-        if (cellYear === endYear && cellMonth === endMonth && cellDay > endDay) return false
-
-        return true
+        if (!filterValue?.start || !filterValue?.end) return true;
+        const dateValue = row.getValue(columnId);
+        if (!dateValue) return false;
+        const dateString = String(dateValue);
+        const [cellYear, cellMonth, cellDay] = dateString.split("-").map(Number);
+        const [startYear, startMonth, startDay] = filterValue.start.split("-").map(Number);
+        const [endYear, endMonth, endDay] = filterValue.end.split("-").map(Number);
+        if (cellYear < startYear || cellYear > endYear) return false;
+        if (cellYear === startYear && cellMonth < startMonth) return false;
+        if (cellYear === endYear && cellMonth > endMonth) return false;
+        if (cellYear === startYear && cellMonth === startMonth && cellDay < startDay) return false;
+        if (cellYear === endYear && cellMonth === endMonth && cellDay > endDay) return false;
+        return true;
       },
     },
     {
       accessorKey: "dataParaEntrega",
       header: "Data Entre.",
       cell: ({ row }) => {
-        const dateValue = row.getValue("dataParaEntrega")
-        if (!dateValue) return ""
-
-        // Garantir que estamos trabalhando com uma string
-        const dateString = String(dateValue)
-        const [year, month, day] = dateString.split("-")
-        return `${day}/${month}/${year}` // Formato DD/MM/YYYY
+        const dateValue = row.getValue("dataParaEntrega");
+        if (!dateValue) return "";
+        const dateString = String(dateValue);
+        const [year, month, day] = dateString.split("-");
+        return `${day}/${month}/${year}`;
       },
       filterFn: (row, columnId, filterValue) => {
-        // Se não temos valores de filtro, mostrar todos os resultados
-        if (!filterValue?.start || !filterValue?.end) return true
-
-        const dateValue = row.getValue(columnId)
-        if (!dateValue) return false
-
-        // Garantir que estamos trabalhando com uma string
-        const dateString = String(dateValue)
-
-        // Parse direto da string de data no formato YYYY-MM-DD
-        const [cellYear, cellMonth, cellDay] = dateString.split("-").map(Number)
-
-        // Parse direto das strings de filtro no formato YYYY-MM-DD
-        const [startYear, startMonth, startDay] = filterValue.start.split("-").map(Number)
-
-        const [endYear, endMonth, endDay] = filterValue.end.split("-").map(Number)
-
-        // Verificar se a data da célula está entre as datas de filtro
-        // YYYY comparação
-        if (cellYear < startYear || cellYear > endYear) return false
-
-        // Mesmo ano, verificar mês
-        if (cellYear === startYear && cellMonth < startMonth) return false
-        if (cellYear === endYear && cellMonth > endMonth) return false
-
-        // Mesmo ano e mês, verificar dia
-        if (cellYear === startYear && cellMonth === startMonth && cellDay < startDay) return false
-        if (cellYear === endYear && cellMonth === endMonth && cellDay > endDay) return false
-
-        return true
+        if (!filterValue?.start || !filterValue?.end) return true;
+        const dateValue = row.getValue(columnId);
+        if (!dateValue) return false;
+        const dateString = String(dateValue);
+        const [cellYear, cellMonth, cellDay] = dateString.split("-").map(Number);
+        const [startYear, startMonth, startDay] = filterValue.start.split("-").map(Number);
+        const [endYear, endMonth, endDay] = filterValue.end.split("-").map(Number);
+        if (cellYear < startYear || cellYear > endYear) return false;
+        if (cellYear === startYear && cellMonth < startMonth) return false;
+        if (cellYear === endYear && cellMonth > endMonth) return false;
+        if (cellYear === startYear && cellMonth === startMonth && cellDay < startDay) return false;
+        if (cellYear === endYear && cellMonth === endMonth && cellDay > endDay) return false;
+        return true;
       },
     },
     {
       accessorKey: "statusDoPedido",
       header: "Status Pedido",
       cell: ({ row }) => {
-        const { classes, icon, text } = getStatusConfig(row.getValue("statusDoPedido"))
+        const { classes, icon, text } = getStatusConfig(row.getValue("statusDoPedido"));
         return (
           <div className={`w-full inline-flex items-center px-3 py-2 rounded-full text-xs font-semibold shadow-sm ${classes}`}>
             {icon}
             {text || row.getValue("statusDoPedido")}
           </div>
-        )
+        );
       },
     },
     {
       accessorKey: "statusPicking",
       header: "Status Picking",
       cell: ({ row }) => {
-        const { classes, icon, text } = getStatusConfig(row.getValue("statusPicking"))
+        const { classes, icon, text } = getStatusConfig(row.getValue("statusPicking"));
         return (
           <div className={`w-full inline-flex items-center px-3 py-2 rounded-full text-xs font-semibold shadow-sm ${classes}`}>
             {icon}
             {text || row.getValue("statusPicking")}
           </div>
-        )
+        );
+      },
+    },
+    {
+      accessorKey: "statusNotaFiscal",
+      header: "Status Nota Fiscal",
+      cell: ({ row }) => {
+        const { classes, icon, text } = getStatusConfig(row.getValue("statusNotaFiscal"));
+        return (
+          <div className={`w-full inline-flex items-center px-3 py-2 rounded-full text-xs font-semibold shadow-sm ${classes}`}>
+            {icon}
+            {text || row.getValue("statusNotaFiscal") || "N/A"}
+          </div>
+        );
       },
     },
     {
@@ -504,31 +476,24 @@ startxref
       header: "Nota Fiscal",
       filterFn: numericFilter,
       cell: ({ row }) => {
-        const notaFiscal = row.getValue("notaFiscal")
-        const companyCode = row.original.filial || ""
-        const chaveNFe = row.original.chaveNFe || ""
-        const statusNotaFiscal = row.original.statusNotaFiscal || ""
-
-        // Verifica se a nota fiscal foi cancelada
-        const isNotaCancelled = statusNotaFiscal === "Cancelada" || statusNotaFiscal === "Cancelado"
-
-        // Verificamos se temos acesso aos dados para download/visualização
-        const hasDownloadAccess = notaFiscal && companyCode && chaveNFe && !isNotaCancelled
+        const notaFiscal = row.getValue("notaFiscal");
+        const companyCode = row.original.filial || "";
+        const chaveNFe = row.original.chaveNFe || "";
+        const statusNotaFiscal = row.original.statusNotaFiscal || "";
+        const isNotaCancelled = statusNotaFiscal === "Cancelada";
+        const isNotaPending = statusNotaFiscal === "Pendente";
+        const hasDownloadAccess = notaFiscal && companyCode && chaveNFe && statusNotaFiscal === "Autorizada";
 
         const handleDownloadXML = async (e: {
-          preventDefault: () => void
-          stopPropagation: () => void
+          preventDefault: () => void;
+          stopPropagation: () => void;
         }) => {
-          e.preventDefault()
-          e.stopPropagation()
-
-          if (!hasDownloadAccess) return
+          e.preventDefault();
+          e.stopPropagation();
+          if (!hasDownloadAccess) return;
 
           try {
-            // Simulate loading
-            await new Promise((resolve) => setTimeout(resolve, 1000))
-
-            // Create fictional XML content
+            await new Promise((resolve) => setTimeout(resolve, 1000));
             const xmlContent = `<?xml version="1.0" encoding="UTF-8"?>
 <NFe xmlns="http://www.portalfiscal.inf.br/nfe">
   <infNFe Id="NFe${chaveNFe}">
@@ -602,46 +567,42 @@ startxref
       </ICMSTot>
     </total>
   </infNFe>
-</NFe>`
-
-            const blob = new Blob([xmlContent], { type: "application/xml" })
-            const downloadUrl = URL.createObjectURL(blob)
-            const link = document.createElement("a")
-            link.href = downloadUrl
-            link.download = `nota-ficticia-${notaFiscal}.xml`
-            document.body.appendChild(link)
-            link.click()
-            link.remove()
-            URL.revokeObjectURL(downloadUrl)
+</NFe>`;
+            const blob = new Blob([xmlContent], { type: "application/xml" });
+            const downloadUrl = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = downloadUrl;
+            link.download = `nota-ficticia-${notaFiscal}.xml`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(downloadUrl);
 
             toast.success(`Download da nota fictícia ${notaFiscal} concluído!`, {
               description: "Arquivo XML de demonstração salvo com sucesso.",
               duration: 5000,
-            })
+            });
           } catch (error) {
             toast.error("Erro ao baixar XML fictício", {
               description: "Não foi possível gerar o arquivo de demonstração.",
-            })
+            });
           }
-        }
+        };
 
         const handleViewDANFE = async (e: {
-          preventDefault: () => void
-          stopPropagation: () => void
+          preventDefault: () => void;
+          stopPropagation: () => void;
         }) => {
-          e.preventDefault()
-          e.stopPropagation()
-
-          if (!hasDownloadAccess) return
+          e.preventDefault();
+          e.stopPropagation();
+          if (!hasDownloadAccess) return;
 
           try {
-            const notaId = notaFiscal.toString()
-            const loadingId = `loading-danfe-${notaId}`
-
-            // Loading aprimorado
-            const loadingEl = document.createElement("div")
-            loadingEl.id = loadingId
-            loadingEl.className = "fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50"
+            const notaId = notaFiscal.toString();
+            const loadingId = `loading-danfe-${notaId}`;
+            const loadingEl = document.createElement("div");
+            loadingEl.id = loadingId;
+            loadingEl.className = "fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50";
             loadingEl.innerHTML = `
               <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 flex flex-col items-center max-w-md">
                 <div class="relative mb-4">
@@ -653,23 +614,18 @@ startxref
                 <p class="font-medium text-gray-900 dark:text-white">Carregando sua Danfe Fictícia</p>
                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Aguarde um momento</p>
               </div>
-            `
-            document.body.appendChild(loadingEl)
+            `;
+            document.body.appendChild(loadingEl);
 
-            // Simulate API delay
-            await new Promise((resolve) => setTimeout(resolve, 1500))
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+            document.getElementById(loadingId)?.remove();
 
-            document.getElementById(loadingId)?.remove()
-
-            // Interface do visualizador
-            const viewerContainer = document.createElement("div")
-            viewerContainer.id = `danfe-viewer-${notaId}`
+            const viewerContainer = document.createElement("div");
+            viewerContainer.id = `danfe-viewer-${notaId}`;
             viewerContainer.className =
-              "fixed inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center z-50"
-
+              "fixed inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center z-50";
             viewerContainer.innerHTML = `
               <div class="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] h-full flex flex-col overflow-hidden border border-gray-200 dark:border-gray-800 transition-all duration-300 opacity-0 scale-95" id="viewer-container-${notaId}">
-                <!-- Cabeçalho com gradiente -->
                 <div class="bg-gradient-to-r from-sky-900 to-zinc-800 p-5 text-white">
                   <div class="flex items-center justify-between">
                     <div class="flex items-center">
@@ -697,8 +653,6 @@ startxref
                     </div>
                   </div>
                 </div>
-                
-                <!-- Área do conteúdo -->
                 <div class="flex-1 overflow-hidden bg-gray-50 dark:bg-gray-900 relative" id="iframe-container-${notaId}">
                   <div class="w-full h-full flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-800">
                     <div class="text-center max-w-md p-6">
@@ -716,8 +670,6 @@ startxref
                       </div>
                     </div>
                   </div>
-                  
-                  <!-- Barra de informações inferior -->
                   <div class="absolute bottom-0 left-0 right-0 bg-white/90 dark:bg-gray-900/90 border-t border-gray-200 dark:border-gray-800 py-2 px-4 flex items-center justify-between backdrop-blur-sm z-10">
                     <div class="flex items-center text-sm text-gray-600 dark:text-gray-300">
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="h-4 w-4 mr-2 text-blue-500"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
@@ -729,22 +681,18 @@ startxref
                   </div>
                 </div>
               </div>
-            `
+            `;
+            document.body.appendChild(viewerContainer);
 
-            document.body.appendChild(viewerContainer)
-
-            // Animar a entrada após um pequeno delay
             setTimeout(() => {
-              const viewerEl = document.getElementById(`viewer-container-${notaId}`)
+              const viewerEl = document.getElementById(`viewer-container-${notaId}`);
               if (viewerEl) {
-                viewerEl.classList.remove("opacity-0", "scale-95")
-                viewerEl.classList.add("opacity-100", "scale-100")
+                viewerEl.classList.remove("opacity-0", "scale-95");
+                viewerEl.classList.add("opacity-100", "scale-100");
               }
-            }, 50)
+            }, 50);
 
-            // Add download functionality
             document.getElementById(`download-danfe-${notaId}`)?.addEventListener("click", () => {
-              // Create fictional PDF content
               const pdfContent = `%PDF-1.4
 1 0 obj
 <<
@@ -797,116 +745,122 @@ trailer
 >>
 startxref
 315
-%%EOF`
-
-              const blob = new Blob([pdfContent], {
-                type: "application/pdf",
-              })
-              const downloadUrl = URL.createObjectURL(blob)
-              const link = document.createElement("a")
-              link.href = downloadUrl
-              link.download = `danfe-ficticia-${notaId}.pdf`
-              document.body.appendChild(link)
-              link.click()
-              link.remove()
-              URL.revokeObjectURL(downloadUrl)
+%%EOF`;
+              const blob = new Blob([pdfContent], { type: "application/pdf" });
+              const downloadUrl = URL.createObjectURL(blob);
+              const link = document.createElement("a");
+              link.href = downloadUrl;
+              link.download = `danfe-ficticia-${notaId}.pdf`;
+              document.body.appendChild(link);
+              link.click();
+              link.remove();
+              URL.revokeObjectURL(downloadUrl);
 
               toast.success(`Download da DANFE fictícia ${notaId} concluído!`, {
                 description: "Arquivo PDF de demonstração salvo com sucesso.",
                 duration: 3000,
-              })
-            })
+              });
+            });
 
-            // Adicionar evento de fechamento com animação de saída
             document.getElementById(`close-viewer-${notaId}`)?.addEventListener("click", () => {
-              const viewerElement = document.getElementById(`viewer-container-${notaId}`)
+              const viewerElement = document.getElementById(`viewer-container-${notaId}`);
               if (viewerElement) {
-                // Animar saída
-                viewerElement.classList.remove("opacity-100", "scale-100")
-                viewerElement.classList.add("opacity-0", "scale-95")
-
-                // Remover após animação
+                viewerElement.classList.remove("opacity-100", "scale-100");
+                viewerElement.classList.add("opacity-0", "scale-95");
                 setTimeout(() => {
-                  const containerElement = document.getElementById(`danfe-viewer-${notaId}`)
+                  const containerElement = document.getElementById(`danfe-viewer-${notaId}`);
                   if (containerElement) {
-                    containerElement.remove()
+                    containerElement.remove();
                   }
-                }, 300)
+                }, 300);
               } else {
-                // Fallback se o elemento não for encontrado
-                const containerElement = document.getElementById(`danfe-viewer-${notaId}`)
+                const containerElement = document.getElementById(`danfe-viewer-${notaId}`);
                 if (containerElement) {
-                  containerElement.remove()
+                  containerElement.remove();
                 }
               }
-            })
+            });
 
             toast.success(`DANFE fictícia ${notaId} carregada!`, {
               description: "Documento de demonstração gerado com sucesso.",
               duration: 3000,
-            })
+            });
           } catch (error) {
-            const loadingId = `loading-danfe-${notaFiscal.toString()}`
-            document.getElementById(loadingId)?.remove()
-
+            const loadingId = `loading-danfe-${notaFiscal.toString()}`;
+            document.getElementById(loadingId)?.remove();
             toast.error("Erro ao carregar DANFE fictícia", {
               description: "Não foi possível gerar o documento de demonstração.",
-            })
+            });
           }
-        }
+        };
 
-        // ... existing styling and tooltip logic remains the same ...
         const textClass = isNotaCancelled
-          ? "block text-center font-medium min-w-[50px] text-red-500 "
-          : "block text-center font-medium min-w-[50px]"
+          ? "block text-center font-medium min-w-[70px] text-red-500"
+          : isNotaPending
+            ? "block text-center font-medium min-w-[70px] text-orange-800"
+            : "block text-center font-medium min-w-[70px]";
 
         const buttonClass = (disabled: boolean) => {
           const baseClass =
-            "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background h-8 w-8 p-0 "
-
+            "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background h-8 w-8 p-0";
           if (isNotaCancelled) {
-            return baseClass + "bg-red-500 hover:bg-red-600 text-white"
+            return baseClass + " bg-red-500 hover:bg-red-600 text-white";
+          } else if (isNotaPending) {
+            return baseClass + " bg-orange-500 hover:bg-orange-600 text-white";
           } else if (disabled) {
-            return baseClass + "bg-primary text-primary-foreground opacity-50 cursor-not-allowed"
+            return baseClass + " bg-primary text-primary-foreground opacity-50 cursor-not-allowed";
           } else {
-            return baseClass + "bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer"
+            return baseClass + " bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer";
           }
-        }
+        };
 
         const notaTooltipMessage = isNotaCancelled
           ? "Nota fiscal cancelada"
-          : !notaFiscal || !companyCode || !chaveNFe
-            ? ""
-            : ""
+          : isNotaPending
+            ? "Nota fiscal pendente"
+            : !notaFiscal || !companyCode || !chaveNFe
+              ? "Nota fiscal não disponível"
+              : "";
 
         const danfeTooltipMessage = isNotaCancelled
           ? "DANFE cancelada"
-          : hasDownloadAccess
-            ? "Visualizar DANFE (Fictícia)"
-            : "DANFE não disponível"
+          : isNotaPending
+            ? "DANFE pendente"
+            : hasDownloadAccess
+              ? "Visualizar DANFE (Fictícia)"
+              : "DANFE não disponível";
 
         const xmlTooltipMessage = isNotaCancelled
           ? "XML cancelado"
-          : hasDownloadAccess
-            ? "Baixar XML (Fictício)"
-            : "XML não disponível"
+          : isNotaPending
+            ? "XML pendente"
+            : hasDownloadAccess
+              ? "Baixar XML (Fictício)"
+              : "XML não disponível";
 
         return (
-          <div className="flex items-center gap-1">
+          <div className="flex items-center ">
             <Tooltip>
               <TooltipTrigger asChild>
-                <span className={textClass} data-status={isNotaCancelled ? "cancelada" : ""}>
+                <span className={textClass} data-status={isNotaCancelled ? "cancelada" : isNotaPending ? "pendente" : ""}>
                   {notaFiscal ? notaFiscal.toString() : "-"}
                 </span>
               </TooltipTrigger>
-              {(isNotaCancelled || notaTooltipMessage) && (
-                <TooltipContent className="bg-white text-red-800 border border-red-200 shadow-md px-3 py-1.5 rounded-md text-sm">
-                  <p>{isNotaCancelled ? "Nota fiscal cancelada" : notaTooltipMessage}</p>
+              {notaTooltipMessage && (
+                <TooltipContent
+                  className={`bg-white border shadow-md px-3 py-1.5 rounded-md text-sm ${
+                    isNotaCancelled
+                      ? "text-red-800 border-red-200"
+                      : isNotaPending
+                        ? "text-orange-800 border-orange-200"
+                        : "text-gray-800 border-gray-200"
+                  }`}
+                >
+                  <p>{notaTooltipMessage}</p>
                 </TooltipContent>
               )}
             </Tooltip>
-
-            <div className="flex gap-1">
+            <div className="flex px-2 gap-1">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
@@ -918,11 +872,16 @@ startxref
                     <span className="sr-only">Visualizar DANFE</span>
                   </button>
                 </TooltipTrigger>
-                <TooltipContent className={isNotaCancelled ? "bg-white text-red-800 border border-red-200" : ""}>
+                <TooltipContent
+                  className={isNotaCancelled
+                    ? "bg-white text-red-800 border-red-200"
+                    : isNotaPending
+                      ? "bg-white text-orange-800 border-orange-200"
+                      : ""}
+                >
                   <p>{danfeTooltipMessage}</p>
                 </TooltipContent>
               </Tooltip>
-
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
@@ -947,13 +906,19 @@ startxref
                     <span className="sr-only">Download XML</span>
                   </button>
                 </TooltipTrigger>
-                <TooltipContent className={isNotaCancelled ? "bg-white text-red-800 border border-red-200" : ""}>
+                <TooltipContent
+                  className={isNotaCancelled
+                    ? "bg-white text-red-800 border-red-200"
+                    : isNotaPending
+                      ? "bg-white text-orange-800 border-orange-200"
+                      : ""}
+                >
                   <p>{xmlTooltipMessage}</p>
                 </TooltipContent>
               </Tooltip>
             </div>
           </div>
-        )
+        );
       },
     },
     {
@@ -973,14 +938,13 @@ startxref
       accessorKey: "nomeTransportadora",
       header: "Nome Transp.",
       cell: ({ row }) => {
-        const nome: string | null = row.getValue("nomeTransportadora")
-        if (!nome) return <>-</>
-
-        const displayName = nome.length > 10 ? `${nome.slice(0, 23)}...` : nome
-        return <>{displayName}</>
+        const nome: string | null = row.getValue("nomeTransportadora");
+        if (!nome) return <>-</>;
+        const displayName = nome.length > 10 ? `${nome.slice(0, 23)}...` : nome;
+        return <>{displayName}</>;
       },
     },
-  ]
-}
+  ];
+};
 
-export type { Pedido }
+export type { Pedido };

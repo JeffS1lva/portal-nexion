@@ -1,7 +1,6 @@
 "use client";
 
 import type React from "react";
-
 import type { ColumnDef } from "@tanstack/react-table";
 import {
   formatCNPJ,
@@ -9,7 +8,6 @@ import {
   formatDatePtBr,
 } from "@/utils/boletos/formatters";
 import { numericFilter, dateRangeFilter } from "@/utils/boletos/filters";
-
 import { PaymentDate } from "@/components/pages/BoletosColumns/PaymentDate";
 import { BoletoButton } from "@/components/pages/BoletosColumns/BoletoButton";
 import { StatusBadge } from "@/components/pages/BoletosColumns/StatusBadge";
@@ -44,7 +42,6 @@ interface Parcela {
 }
 
 export const useBoletosColumns = () => {
-  // Função para criar o modal de loading
   const createLoadingModal = useCallback((notaId: string) => {
     const loadingId = `loading-danfe-${notaId}`;
     const loadingEl = document.createElement("div");
@@ -73,7 +70,6 @@ export const useBoletosColumns = () => {
     return loadingId;
   }, []);
 
-  // Função para remover o modal de loading
   const removeLoadingModal = useCallback((loadingId: string) => {
     const loadingElement = document.getElementById(loadingId);
     if (loadingElement) {
@@ -81,7 +77,6 @@ export const useBoletosColumns = () => {
     }
   }, []);
 
-  // Função para criar o modal de erro
   const createErrorModal = useCallback((message: string) => {
     const errorEl = document.createElement("div");
     errorEl.className =
@@ -117,7 +112,6 @@ export const useBoletosColumns = () => {
     }
   }, []);
 
-  // Função para criar o viewer com conteúdo HTML fictício
   const createMockViewer = useCallback((fileUrl: string, notaId: string) => {
     const viewerContainer = document.createElement("div");
     viewerContainer.id = `danfe-viewer-${notaId}`;
@@ -192,7 +186,6 @@ export const useBoletosColumns = () => {
     );
 
     if (iframeContainer) {
-      // Para outros navegadores: usar iframe
       const iframeElement = document.createElement("iframe");
       iframeElement.setAttribute("src", fileUrl);
       iframeElement.setAttribute("frameborder", "0");
@@ -201,7 +194,6 @@ export const useBoletosColumns = () => {
       iframeContainer.appendChild(iframeElement);
     }
 
-    // Animar entrada
     setTimeout(() => {
       const viewerEl = document.getElementById(`viewer-container-${notaId}`);
       if (viewerEl) {
@@ -210,7 +202,6 @@ export const useBoletosColumns = () => {
       }
     }, 50);
 
-    // Evento de download
     const downloadButton = document.getElementById(`download-mock-${notaId}`);
     if (downloadButton) {
       downloadButton.addEventListener("click", () => {
@@ -221,7 +212,6 @@ export const useBoletosColumns = () => {
       });
     }
 
-    // Evento de fechamento
     const closeButton = document.getElementById(`close-viewer-${notaId}`);
     if (closeButton) {
       closeButton.addEventListener("click", () => {
@@ -246,7 +236,6 @@ export const useBoletosColumns = () => {
     }
   }, []);
 
-  // Função para fazer o download do PDF
   const handleViewDANFE = useCallback(
     async (
       _companyCode: string,
@@ -259,7 +248,6 @@ export const useBoletosColumns = () => {
       const loadingId = createLoadingModal(notaId);
 
       try {
-        // Simular atraso da API com setTimeout
         await new Promise((resolve) => setTimeout(resolve, 1500));
 
         removeLoadingModal(loadingId);
@@ -413,7 +401,6 @@ export const useBoletosColumns = () => {
           </head>
           <body>
             <div class="page">
-              <!-- Cabeçalho Principal -->
               <div class="header">
                 <div class="header-top">
                   <div class="header-title">DOCUMENTO AUXILIAR DA NOTA FISCAL ELETRÔNICA</div>
@@ -485,7 +472,6 @@ export const useBoletosColumns = () => {
                 </div>
               </div>
 
-              <!-- Destinatário -->
               <div class="section">
                 <div class="section-header">DESTINATÁRIO / REMETENTE</div>
                 <div class="section-content">
@@ -522,7 +508,6 @@ export const useBoletosColumns = () => {
                 </div>
               </div>
 
-              <!-- Dados da Nota -->
               <div class="section">
                 <div class="section-header">DADOS DA NOTA FISCAL</div>
                 <div class="section-content">
@@ -556,7 +541,6 @@ export const useBoletosColumns = () => {
                 </div>
               </div>
 
-              <!-- Produtos -->
               <div class="section">
                 <div class="section-header">DADOS DOS PRODUTOS / SERVIÇOS</div>
                 <div class="section-content">
@@ -609,7 +593,6 @@ export const useBoletosColumns = () => {
                 </div>
               </div>
 
-              <!-- Totais -->
               <div class="totals">
                 <div class="total-box">
                   <div class="field">
@@ -654,7 +637,6 @@ export const useBoletosColumns = () => {
                 </div>
               </div>
 
-              <!-- QR Code e Informações Adicionais -->
               <div class="section" style="margin-top: 10px;">
                 <div class="section-header">CONSULTA VIA LEITOR DE QR CODE</div>
                 <div class="section-content" style="display: flex; align-items: center;">
@@ -677,7 +659,6 @@ export const useBoletosColumns = () => {
                 </div>
               </div>
 
-              <!-- Aviso de Documento Fictício -->
               <div class="warning">
                 <div class="warning-title">⚠️ DOCUMENTO FICTÍCIO</div>
                 <div class="warning-text">
@@ -690,11 +671,9 @@ export const useBoletosColumns = () => {
           </html>
         `;
 
-        // Criar blob a partir do conteúdo HTML
         const blob = new Blob([mockPDFContent], { type: "text/html" });
         const fileUrl = URL.createObjectURL(blob);
 
-        // Chamar createMockViewer para lidar com conteúdo HTML
         createMockViewer(fileUrl, notaId);
       } catch (error) {
         removeLoadingModal(loadingId);
@@ -715,18 +694,16 @@ export const useBoletosColumns = () => {
         header: "Código",
         filterFn: numericFilter,
         cell: ({ row }) => {
-          const codigoBoleto = row.getValue("codigoBoleto") as
-            | string
-            | number
-            | null
-            | undefined;
+          const codigoBoleto = row.getValue("codigoBoleto") as string | number | null | undefined;
           const id = row.original.id;
           const dataVencimento = row.getValue("dataVencimento") as string;
           const status = row.getValue("status") as string;
 
+          const textClass = status.toLowerCase() === "inativo" ? "text-red-100 bg-red-500 px-2 rounded-sm py-1" : "dark:text-gray-200";
+
           return (
-            <div className="flex items-center gap-1">
-              <span className="block text-center font-medium min-w-[50px]">
+            <div className="flex items-center gap-1 ">
+              <span className={`block font-medium min-w-[60px] px-2 rounded-sm py-1  ${textClass}`}>
                 {codigoBoleto ? String(codigoBoleto) : "-"}
               </span>
               <div className="flex gap-1">
@@ -782,12 +759,10 @@ export const useBoletosColumns = () => {
           const status =
             row.original.status || row.original.statusNotaFiscal || "";
 
-          // Verificar status cancelado da mesma forma que o BoletoButton
           const isNotaCancelled = ["cancelado", "cancelada"].some((s) =>
             status.toLowerCase().includes(s)
           );
 
-          // Verificar se temos os dados necessários para a DANFE
           const hasDANFEData = Boolean(
             (notaFiscal || numNF) &&
               companyCode &&
@@ -796,42 +771,33 @@ export const useBoletosColumns = () => {
               chaveNFe.trim() !== ""
           );
 
-          // Debug para acompanhar os dados
-
           const textClass = isNotaCancelled
-            ? "text-center font-medium min-w-[50px] text-red-500 line-through"
-            : "text-center font-medium min-w-[50px] dark:text-gray-200";
+            ? "text-center font-medium min-w-[70px] text-red-500 line-through"
+            : "text-center font-medium min-w-[70px] dark:text-gray-200";
 
-          // Definir tooltip específico para cada situação
           const getTooltipText = () => {
             if (isNotaCancelled) {
               return "Esta nota fiscal está indisponível, por isso, não está disponível para visualização.";
             }
-
             if (!hasDANFEData) {
               return "DANFE não disponível para boletos";
             }
-
             return "Visualizar DANFE";
           };
 
           const handleClick = (e: React.MouseEvent) => {
             e.preventDefault();
             e.stopPropagation();
-
-            // Não executar ação se cancelado ou sem dados
             if (isNotaCancelled || !hasDANFEData) {
               return;
             }
-
             const notaId = (notaFiscal || numNF || "").toString();
             handleViewDANFE(companyCode, chaveNFe, notaId, isNotaCancelled);
           };
 
           return (
             <TooltipProvider>
-              <div className="flex items-center justify-center gap-2 min-h-[2rem]">
-                {/* Número da nota fiscal */}
+              <div className="flex items-center gap-2 min-h-[2rem]">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <span className={textClass}>
@@ -844,8 +810,6 @@ export const useBoletosColumns = () => {
                     </TooltipContent>
                   )}
                 </Tooltip>
-
-                {/* Botão DANFE - só mostrar se tiver numNF */}
                 {numNF && (
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -916,7 +880,6 @@ export const useBoletosColumns = () => {
           const dataVencimento = row.getValue("dataVencimento") as string;
           const dataPagamento = row.getValue("dataPagamento") as string | null;
 
-          // Validação adicional
           if (!status || !dataVencimento) {
             return <div className="text-gray-500">Dados inválidos</div>;
           }
