@@ -1,7 +1,6 @@
 "use client";
 
 import type React from "react";
-
 import { useCallback } from "react";
 import { Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,6 +13,11 @@ import {
 import { useBoletoViewer } from "@/components/pages/BoletosColumns/BoletoViewer";
 import { useParcelaData } from "@/hooks/useParcelaData";
 import { parseDate } from "@/utils/boletos/formatters";
+
+// Define status options to match StatusBadge
+const statusPagamentoOptions = ["Pago", "Pendente", "Atrasado", "Cancelado"];
+const situacaoOptions = ["Normal", "Urgente", "Bloqueado", "Regular"];
+const statusOptions = ["Ativo", "Inativo", "Processando", "Concluído"];
 
 interface BoletoButtonProps {
   boletoId: string | number | null | undefined;
@@ -34,12 +38,11 @@ export function BoletoButton({
   const { parcelaData, loading } = useParcelaData(
     parcelaId,
     boletoId,
-    // Passar dados iniciais se disponíveis
     (dataVencimento !== null && dataVencimento !== undefined) || status
       ? {
-          dataVencimento: dataVencimento === null ? undefined : dataVencimento,
-          statusPagamento: status,
-        }
+        dataVencimento: dataVencimento === null ? undefined : dataVencimento,
+        statusPagamento: status,
+      }
       : null
   );
 
@@ -78,18 +81,28 @@ export function BoletoButton({
     .trim();
 
   // Verificar status de pagamento
-  const isPaid = ["baixado", "pago", "quitado", "liquidado"].some((s) => {
-    const includes = statusAtual.includes(s);
+  const isPaid = statusPagamentoOptions
+    .map((s) => s.toLowerCase())
+    .includes(statusAtual) && statusAtual === "pago";
 
-    return includes;
-  });
+  // Verificar status cancelado, bloqueado ou inativo
+  const isUnavailable =
+    (statusPagamentoOptions
+      .map((s) => s.toLowerCase())
+      .includes(statusAtual) &&
+      statusAtual === "cancelado") ||
+    (situacaoOptions
+      .map((s) => s.toLowerCase())
+      .includes(statusAtual) &&
+      statusAtual === "bloqueado") ||
+    (statusOptions
+      .map((s) => s.toLowerCase())
+      .includes(statusAtual) &&
+      statusAtual === "inativo");
 
-  // Verificar status cancelado
-  const isCancelled = ["cancelado", "cancelada"].some((s) => {
-    const includes = statusAtual.includes(s);
-
-    return includes;
-  });
+  const isInactive = statusOptions
+    .map((s) => s.toLowerCase())
+    .includes(statusAtual) && statusAtual === "inativo";
 
   const hasId = parcelaId !== null && parcelaId !== undefined;
   const hasCodigoBoleto =
@@ -97,38 +110,34 @@ export function BoletoButton({
 
   const isExpired = getVencimentoInfo();
 
-  // Boleto disponível se tiver IDs válidos e não estiver cancelado
-  const boletoAvailable = hasId && hasCodigoBoleto && !isCancelled && !loading;
+  // Boleto disponível se tiver IDs válidos, não estiver indisponível e não estiver carregando
+  const boletoAvailable = hasId && hasCodigoBoleto && !isUnavailable && !loading;
 
   // Definir tooltip específico para cada situação
   const getTooltipText = () => {
     if (loading) {
       return "Carregando...";
     }
-
-    if (isCancelled) {
-      return "Este boleto foi cancelado e não está disponível para visualização.";
+    if (isInactive) {
+      return "Este boleto está inativo e não está disponível para visualização.";
     }
-
+    if (statusAtual === "cancelado" || statusAtual === "bloqueado") {
+      return "Este boleto está indisponível para visualização.";
+    }
     if (!hasId || !hasCodigoBoleto) {
       return "Boleto não disponível - dados insuficientes";
     }
-
     if (isPaid) {
       return "Visualizar boleto (já pago)";
     }
-
     if (isExpired) {
       return "Visualizar boleto (vencido)";
     }
-
     return "Visualizar boleto";
   };
 
   const handleVisualizarBoleto = (e: React.MouseEvent) => {
     e.preventDefault();
-    e.stopPropagation();
-
     console.log("[v0] Attempting to visualize boleto:", {
       boletoId,
       parcelaId,
@@ -137,7 +146,6 @@ export function BoletoButton({
       status: statusAtual,
     });
 
-    // Não executar ação se não estiver disponível ou carregando
     if (!boletoAvailable || loading) {
       console.log("[v0] Boleto visualization blocked:", {
         boletoAvailable,
@@ -170,39 +178,44 @@ export function BoletoButton({
   };
 
   return (
-    <TooltipProvider delayDuration={300}>
+    // Ensure TooltipProvider is used higher in the component tree if possible
+    <TooltipProvider delayDuration={200}>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button
-            variant="bottomPassword"
-            size="icon"
-            className={`h-8 w-8 ${
-              isCancelled
-                ? "bg-red-600 hover:bg-red-800 text-white cursor-not-allowed opacity-80"
-                : !boletoAvailable
-                ? "opacity-50 cursor-not-allowed"
-                : "cursor-pointer "
-            } ${loading ? "animate-pulse" : ""}`}
-            onClick={handleVisualizarBoleto}
-            disabled={!boletoAvailable}
-          >
-            {loading ? (
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-            ) : (
-              <Eye className="h-4 w-4" />
-            )}
-            <span className="sr-only">
-              {loading
-                ? "Carregando dados do boleto..."
-                : !boletoAvailable
-                ? isCancelled
-                  ? "Boleto indisponível: foi cancelado"
-                  : "Boleto indisponível: dados insuficientes"
-                : "Visualizar boleto"}
-            </span>
-          </Button>
+          {/* Wrap Button in a div to allow tooltip on disabled button */}
+          <div className="inline-flex">
+            <Button
+              variant="bottomPassword"
+              size="icon"
+              className={`h-8 w-8 ${isInactive
+                  ? "bg-red-500 hover:bg-red-600 text-white cursor-not-allowed"
+                  : statusAtual === "cancelado" || statusAtual === "bloqueado"
+                    ? "bg-red-500 hover:bg-red-600 text-white cursor-not-allowed"
+                    : !boletoAvailable
+                      ? "opacity-50 cursor-not-allowed"
+                      : "cursor-pointer"
+                } ${loading ? "animate-pulse" : ""}`}
+              onClick={handleVisualizarBoleto}
+              disabled={!boletoAvailable}
+              aria-label={getTooltipText()}
+            >
+              {loading ? (
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              ) : (
+                <Eye className="h-4 w-4" />
+              )}
+              <span className="sr-only">{getTooltipText()}</span>
+            </Button>
+          </div>
         </TooltipTrigger>
-        <TooltipContent>
+        <TooltipContent
+          className={`p-2 rounded-md shadow-lg z-[1000] ${isInactive || statusAtual === "cancelado" || statusAtual === "bloqueado"
+              ? "bg-white text-red-800 border border-red-200 shadow-md   rounded-md text-sm"
+              : "bg-gray-800 text-white border-gray-700"
+            }`}
+          side="top"
+          align="center"
+        >
           <p>{getTooltipText()}</p>
         </TooltipContent>
       </Tooltip>

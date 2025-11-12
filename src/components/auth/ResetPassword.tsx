@@ -1,21 +1,21 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { BadgeCheck, BadgeAlert } from "lucide-react";
+import { BadgeCheck, BadgeAlert, Lock, Mail, Eye, EyeOff, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 
 interface ResetPasswordProps {
   closeModal: () => void;
-  userEmail?: string; // Email do usuário atual
+  userEmail?: string;
 }
 
 export function ResetPassword({
@@ -28,28 +28,27 @@ export function ResetPassword({
   const [email, setEmail] = useState<string>(userEmail || "");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [apiResponse, setApiResponse] = useState<string>("");
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // Atualiza o estado do email se a prop mudar
   useEffect(() => {
     if (userEmail) {
       setEmail(userEmail);
     }
   }, [userEmail]);
 
-  // Função para limitar entrada a exatamente 8 caracteres
   const handlePasswordChange = (
     e: React.ChangeEvent<HTMLInputElement>,
     setter: React.Dispatch<React.SetStateAction<string>>
   ) => {
     const value = e.target.value;
-    // Limita a entrada a 8 caracteres
     if (value.length <= 8) {
       setter(value);
     }
   };
 
   const handleSaveChanges = async () => {
-    // Verifica se todos os campos obrigatórios estão preenchidos
     if (!email || !currentPassword || !newPassword) {
       toast.error("Email, senha atual e nova senha são obrigatórios.", {
         style: {
@@ -65,14 +64,11 @@ export function ResetPassword({
       try {
         setIsLoading(true);
 
-        // Definindo o payload de acordo com o formato esperado pela API
         const payload = {
           currentPassword,
           newPassword,
           email,
         };
-
-        // Log para debug
 
         const response = await fetch("/api/external/Auth/change-password", {
           method: "POST",
@@ -83,7 +79,6 @@ export function ResetPassword({
           credentials: "include",
         });
 
-        // Armazena a resposta para debug
         const responseData = await response.text();
         setApiResponse(responseData);
 
@@ -106,7 +101,6 @@ export function ResetPassword({
         setNewPassword("");
         setConfirmPassword("");
       } catch (error) {
-        // Mensagem de erro mais informativa
         toast.error(
           `Erro ao redefinir a senha: ${
             error instanceof Error
@@ -155,14 +149,12 @@ export function ResetPassword({
     newPassword !== confirmPassword ||
     isLoading;
 
-  // Determina o texto do botão com base no estado
   const buttonText = isLoading
     ? "Processando..."
     : isButtonDisabled
     ? "Bloqueado"
     : "Salvar Alterações";
 
-  // Determina a mensagem de título para o botão
   const getButtonTitle = () => {
     if (isLoading) {
       return "Processando sua solicitação";
@@ -180,140 +172,206 @@ export function ResetPassword({
     return "Clique para salvar as alterações";
   };
 
-  // Define o estilo do cursor e opacidade com base no estado
-  const buttonStyle = isButtonDisabled
-    ? "cursor-not-allowed opacity-50"
-    : "cursor-pointer opacity-100";
-
   return (
-    <Dialog open={true} onOpenChange={(open) => !open && closeModal()}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Redefinir Senha</DialogTitle>
-          <DialogDescription>
-            Preencha as informações para redefinir sua senha.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="email" className="text-right">
+    <Sheet open={true} onOpenChange={(open) => !open && closeModal()}>
+      <SheetContent className="sm:max-w-[480px] px-0">
+        {/* Header com gradiente */}
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-8 -mx-0 -mt-0 mb-6">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="bg-white/20 backdrop-blur-sm p-3 rounded-xl">
+              <ShieldCheck className="w-6 h-6 text-white" />
+            </div>
+            <SheetTitle className="text-white text-2xl font-bold">
+              Redefinir Senha
+            </SheetTitle>
+          </div>
+          <SheetDescription className="text-blue-100 text-base">
+            Atualize sua senha de forma segura e protegida
+          </SheetDescription>
+        </div>
+
+        <div className="px-6 space-y-6">
+          {/* Email Field */}
+          <div className="space-y-2">
+            <Label htmlFor="email" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+              <Mail className="w-4 h-4" />
               Email
             </Label>
-            <Input
-              id="email"
-              type="email"
-              className="col-span-3"
-              placeholder="Digite seu email"
-              value={email}
-              autoComplete="off"
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={isLoading || !!userEmail}
-            />
+            <div className="relative">
+              <Input
+                id="email"
+                type="email"
+                className="pl-4 pr-4 py-6 text-base border-2 focus:border-blue-500 transition-all rounded-xl"
+                placeholder="seu@email.com"
+                value={email}
+                autoComplete="off"
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={isLoading || !!userEmail}
+              />
+            </div>
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="current-password" className="text-right">
+
+          {/* Current Password Field */}
+          <div className="space-y-2">
+            <Label htmlFor="current-password" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+              <Lock className="w-4 h-4" />
               Senha Atual
             </Label>
-            <Input
-              id="current-password"
-              type="password"
-              className="col-span-3"
-              placeholder="Digite sua senha atual"
-              value={currentPassword}
-              autoComplete="off"
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              disabled={isLoading}
-            />
+            <div className="relative">
+              <Input
+                id="current-password"
+                type={showCurrentPassword ? "text" : "password"}
+                className="pl-4 pr-12 py-6 text-base border-2 focus:border-blue-500 transition-all rounded-xl"
+                placeholder="Digite sua senha atual"
+                value={currentPassword}
+                autoComplete="off"
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                disabled={isLoading}
+              />
+              <button
+                type="button"
+                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                {showCurrentPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            </div>
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="new-password" className="text-right">
+
+          {/* New Password Field */}
+          <div className="space-y-2">
+            <Label htmlFor="new-password" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+              <Lock className="w-4 h-4" />
               Nova Senha
             </Label>
-            <div className="col-span-3 relative">
+            <div className="relative">
               <Input
                 id="new-password"
-                type="password"
+                type={showNewPassword ? "text" : "password"}
                 autoComplete="off"
-                className={`w-full ${
+                className={`pl-4 pr-12 py-6 text-base border-2 transition-all rounded-xl ${
                   newPassword.length > 0 && newPassword.length !== 8
-                    ? "border-red-500"
-                    : ""
+                    ? "border-red-500 focus:border-red-500"
+                    : "focus:border-blue-500"
                 }`}
-                placeholder="Digite sua nova senha (8 caracteres)"
+                placeholder="Digite sua nova senha"
                 value={newPassword}
                 onChange={(e) => handlePasswordChange(e, setNewPassword)}
                 disabled={isLoading}
                 maxLength={8}
               />
+              <button
+                type="button"
+                onClick={() => setShowNewPassword(!showNewPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                {showNewPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+              {/* Character counter */}
+              <div className="absolute -bottom-6 right-0 text-xs text-gray-500">
+                {newPassword.length}/8 caracteres
+              </div>
             </div>
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="confirm-password" className="text-end">
-              Confirmar Senha
+
+          {/* Confirm Password Field */}
+          <div className="space-y-2 pt-2">
+            <Label htmlFor="confirm-password" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+              <Lock className="w-4 h-4" />
+              Confirmar Nova Senha
             </Label>
-            <div className="col-span-3 relative">
+            <div className="relative">
               <Input
                 id="confirm-password"
-                type="password"
-                className={`w-full ${
-                  isPasswordMismatch ? "border-red-500" : ""
+                type={showConfirmPassword ? "text" : "password"}
+                className={`pl-4 pr-12 py-6 text-base border-2 transition-all rounded-xl ${
+                  isPasswordMismatch
+                    ? "border-red-500 focus:border-red-500"
+                    : "focus:border-blue-500"
                 }`}
-                placeholder="Confirme sua nova senha (8 caracteres)"
+                placeholder="Confirme sua nova senha"
                 value={confirmPassword}
                 onChange={(e) => handlePasswordChange(e, setConfirmPassword)}
                 disabled={isLoading}
                 autoComplete="off"
                 maxLength={8}
               />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
             </div>
           </div>
-        </div>
-        <hr />
 
-        {newPassword.length > 0 && newPassword.length !== 8 && (
-          <div className="flex items-center gap-2 text-[0.8rem] text-red-600">
-            <BadgeAlert size={16} />
-            <span>A senha precisa ter exatamente 8 caracteres.</span>
+          {/* Validation Messages */}
+          <div className="space-y-3 pt-4">
+            {newPassword.length > 0 && newPassword.length !== 8 && (
+              <div className="flex items-center gap-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <BadgeAlert className="w-5 h-5 text-red-600 flex-shrink-0" />
+                <span className="text-sm text-red-700 font-medium">
+                  A senha precisa ter exatamente 8 caracteres.
+                </span>
+              </div>
+            )}
+
+            {isPasswordMismatch && (
+              <div className="flex items-center gap-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <BadgeAlert className="w-5 h-5 text-red-600 flex-shrink-0" />
+                <span className="text-sm text-red-700 font-medium">
+                  As senhas não coincidem.
+                </span>
+              </div>
+            )}
+
+            {isPasswordValid &&
+              !isPasswordMismatch &&
+              confirmPassword.length > 0 && (
+                <div className="flex items-center gap-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <BadgeCheck className="w-5 h-5 text-green-600 flex-shrink-0" />
+                  <span className="text-sm text-green-700 font-medium">
+                    Senhas válidas e correspondentes!
+                  </span>
+                </div>
+              )}
           </div>
-        )}
 
-        {isPasswordMismatch && (
-          <div className="flex items-center gap-2 text-[0.8rem] text-red-600">
-            <BadgeAlert size={16} />
-            <span>As senhas não coincidem.</span>
-          </div>
-        )}
-
-        {isPasswordValid &&
-          !isPasswordMismatch &&
-          confirmPassword.length > 0 && (
-            <div className="flex items-center gap-2 text-[0.8rem] text-green-600">
-              <BadgeCheck size={16} />
-              <span>A senha tem 8 caracteres.</span>
+          {apiResponse && (
+            <div className="mt-4 text-sm text-gray-600 bg-gray-50 p-4 rounded-lg border border-gray-200 overflow-auto max-h-24">
+              <strong className="block mb-1">Resposta API (debug):</strong>
+              <code className="text-xs">{apiResponse}</code>
             </div>
           )}
+        </div>
 
-        {apiResponse && (
-          <div className="mt-2 text-sm text-gray-600 bg-gray-100 p-2 rounded overflow-auto max-h-24">
-            <strong>Resposta API (debug):</strong> {apiResponse}
-          </div>
-        )}
-
-        <DialogFooter>
-          <Button type="button" onClick={closeModal} disabled={isLoading}>
+        {/* Footer com botões */}
+        <SheetFooter className="px-6 pt-8 pb-6 gap-3 flex-row sm:flex-row">
+          <Button
+            type="button"
+            onClick={closeModal}
+            disabled={isLoading}
+            variant="outline"
+            className="flex-1 py-6 text-base font-semibold rounded-xl border-2 hover:bg-gray-50"
+          >
             Cancelar
           </Button>
           <Button
             type="button"
             onClick={handleSaveChanges}
             disabled={isButtonDisabled}
-            className={buttonStyle}
+            className={`flex-1 py-6 text-base font-semibold rounded-xl transition-all ${
+              isButtonDisabled
+                ? "cursor-not-allowed opacity-50"
+                : "cursor-pointer bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl"
+            }`}
             title={getButtonTitle()}
           >
             {buttonText}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 }

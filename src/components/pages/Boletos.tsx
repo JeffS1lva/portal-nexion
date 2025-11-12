@@ -67,24 +67,62 @@ const generateMockParcelas = (count: number = 50): Parcela[] => {
     const parcelaAtual = Math.floor(Math.random() * numParcelas) + 1;
     const statusPagamento = statusPagamentoOptions[Math.floor(Math.random() * statusPagamentoOptions.length)];
     const status = statusOptions[Math.floor(Math.random() * statusOptions.length)];
-    const vencimentoDate = new Date(Date.now() + Math.random() * 60 * 24 * 60 * 60 * 1000);
 
-    // Lógica para gerar dataPagamento com base no statusPagamento e status
+    // Data atual dinâmica (25/10/2025 às 16:03)
+    const currentDate = new Date();
+    currentDate.setHours(0, 0, 0, 0); // Normaliza para meia-noite
+
+    // Gerar dataVencimento até 90 dias antes da data atual, incluindo a data atual
+    const maxDaysBefore = 90;
+    const daysBeforeVencimento = Math.floor(Math.random() * (maxDaysBefore + 1)); // Inclui 0 para permitir vencimento na data atual
+    const vencimentoDate = new Date(currentDate.getTime() - daysBeforeVencimento * 24 * 60 * 60 * 1000);
+
+    // Lógica para gerar dataPagamento
     let dataPagamento = "";
-    if (statusPagamento === "Pago") {
-      // Para "Pago", a data de pagamento é antes ou igual à data de vencimento
-      const daysBeforeDue = Math.floor(Math.random() * 10); // Até 10 dias antes
+    if (status === "Concluído" || statusPagamento === "Pago") {
+      // Data de pagamento até 10 dias antes do vencimento, mas não após a data atual
+      const maxDaysBeforeDue = Math.min(10, daysBeforeVencimento);
+      const daysBeforeDue = Math.floor(Math.random() * (maxDaysBeforeDue + 1));
       const paymentDate = new Date(vencimentoDate.getTime() - daysBeforeDue * 24 * 60 * 60 * 1000);
-      dataPagamento = paymentDate.toISOString().split("T")[0];
-    } else if (statusPagamento === "Atrasado" && Math.random() > 0.3) {
-      // Para "Atrasado", 70% de chance de ter uma data de pagamento após o vencimento
-      const daysAfterDue = Math.floor(Math.random() * 15) + 1; // 1 a 15 dias após
+      // Garantir que dataPagamento não seja futura
+      if (paymentDate <= currentDate) {
+        dataPagamento = paymentDate.toISOString().split("T")[0];
+      } else {
+        dataPagamento = currentDate.toISOString().split("T")[0]; // Fallback para data atual
+      }
+    } else if (statusPagamento === "Atrasado") {
+      // Data de pagamento até 15 dias após o vencimento, mas não após a data atual
+      const maxDaysAfterDue = Math.min(15, Math.floor((currentDate.getTime() - vencimentoDate.getTime()) / (24 * 60 * 60 * 1000)));
+      const daysAfterDue = maxDaysAfterDue >= 0 ? Math.floor(Math.random() * (maxDaysAfterDue + 1)) : 0;
       const paymentDate = new Date(vencimentoDate.getTime() + daysAfterDue * 24 * 60 * 60 * 1000);
-      dataPagamento = paymentDate.toISOString().split("T")[0];
-    } else if (status === "Inativo" && Math.random() > 0.5) {
-      // Para "Inativo", 50% de chance de ter uma data de pagamento
-      const paymentDate = new Date(vencimentoDate.getTime() - Math.floor(Math.random() * 20) * 24 * 60 * 60 * 1000);
-      dataPagamento = paymentDate.toISOString().split("T")[0];
+      // Garantir que dataPagamento não seja futura
+      if (paymentDate <= currentDate) {
+        dataPagamento = paymentDate.toISOString().split("T")[0];
+      } else {
+        dataPagamento = currentDate.toISOString().split("T")[0]; // Fallback para data atual
+      }
+    } else if (statusPagamento === "Cancelado" && Math.random() > 0.7) {
+      // 30% de chance de ter uma data de pagamento antes do vencimento, mas não após a data atual
+      const maxDaysBeforeDue = Math.min(5, daysBeforeVencimento);
+      const daysBeforeDue = Math.floor(Math.random() * (maxDaysBeforeDue + 1));
+      const paymentDate = new Date(vencimentoDate.getTime() - daysBeforeDue * 24 * 60 * 60 * 1000);
+      // Garantir que dataPagamento não seja futura
+      if (paymentDate <= currentDate) {
+        dataPagamento = paymentDate.toISOString().split("T")[0];
+      } else {
+        dataPagamento = currentDate.toISOString().split("T")[0]; // Fallback para data atual
+      }
+    }
+    // "Pendente" deixa dataPagamento como vazia ("")
+
+    // Validação final para garantir que dataPagamento não seja futura
+    if (dataPagamento) {
+      const paymentDate = new Date(dataPagamento);
+ paymentDate.setHours(0, 0, 0, 0); // Normaliza para meia-noite
+      if (paymentDate > currentDate) {
+        console.warn(`Data futura detectada: status=${status}, statusPagamento=${statusPagamento}, dataPagamento=${dataPagamento}, dataVencimento=${vencimentoDate.toISOString().split("T")[0]}`);
+        dataPagamento = currentDate.toISOString().split("T")[0];
+      }
     }
 
     return {
@@ -109,6 +147,7 @@ const generateMockParcelas = (count: number = 50): Parcela[] => {
       chaveNFe: `NFe${Math.floor(Math.random() * 100000000000000000)}`.padStart(44, "0"),
       statusNotaFiscal: Math.random() > 0.5 ? "Aprovada" : "Pendente",
       pedidosCompra: produtosOptions[Math.floor(Math.random() * produtosOptions.length)],
+      notaFiscal: `NF${String(Math.floor(Math.random() * 10000)).padStart(6, "0")}`,
     };
   });
 };
@@ -159,6 +198,7 @@ export const Boletos: React.FC = () => {
       setError(null);
       await new Promise((resolve) => setTimeout(resolve, 1000)); // Simula atraso
       const mockData = generateMockParcelas(50);
+      console.log(mockData); // Para depuração
       setAllParcelas(mockData);
     } catch (err) {
       setError("error");
@@ -338,6 +378,7 @@ export const Boletos: React.FC = () => {
             const parcela = row.original as Parcela;
             const isInativo = parcela.status.toLowerCase() === "inativo";
             const textClass = isInativo ? "text-red-500" : "dark:text-gray-200";
+            const currentDate = new Date().toISOString().split("T")[0]; // Data atual como fallback
 
             return (
               <Card key={row.id} className="w-full">
@@ -382,10 +423,16 @@ export const Boletos: React.FC = () => {
                     </div>
                     <div>
                       <span className="text-muted-foreground">Data Pagamento:</span>
-                      <p className={`font-medium ${textClass}`}>
-                        {parcela.dataPagamento
-                          ? format(new Date(parcela.dataPagamento), "dd/MM/yyyy")
-                          : "-"}
+                      <p className={`font-medium ${isInativo ? "text-red-500" : textClass}`}>
+                        {parcela.status.toLowerCase() === "concluído"
+                          ? parcela.dataPagamento && !isNaN(new Date(parcela.dataPagamento).getTime())
+                            ? format(new Date(parcela.dataPagamento), "dd/MM/yyyy")
+                            : format(new Date(currentDate), "dd/MM/yyyy")
+                          : parcela.status.toLowerCase() === "pendente"
+                          ? "Aguardando pagamento"
+                          : parcela.status.toLowerCase() === "inativo"
+                          ? "Cancelado"
+                          : "Aguardando pagamento"}
                       </p>
                     </div>
                     <div>

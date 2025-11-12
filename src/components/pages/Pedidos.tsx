@@ -146,7 +146,7 @@ export const Pedidos: React.FC = () => {
     end: undefined,
   })
 
-  const [pageSize, setPageSize] = React.useState<number>(8)
+  const [pageSize, setPageSize] = React.useState<number>(9)
 
   const columns = usePedidosColumns()
 

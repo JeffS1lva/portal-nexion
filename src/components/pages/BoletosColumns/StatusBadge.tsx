@@ -40,7 +40,7 @@ export const StatusBadge = ({
 
 const getStatusConfig = (
   status: string,
-  dataPagamento: string | Date | null | undefined,
+  _dataPagamento: string | Date | null | undefined,
   dataVencimento: string
 ): StatusConfig => {
   const statusLower = status?.toLowerCase() || "";
@@ -156,21 +156,7 @@ const getStatusConfig = (
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
 
-    if (["gerado", "rejeitado", "confirmado", "remessa", "pendente"].includes(statusLower)) {
-      if (vencimento < hoje && !dataPagamento) {
-        config = {
-          classes: "bg-red-100 border border-red-200 text-red-800",
-          icon: <AlertCircle className="h-3 w-3 mr-1 text-red-600" />,
-          text: "Atrasado",
-        };
-      } else {
-        config = {
-          classes: "bg-orange-100 border border-orange-200 text-orange-800",
-          icon: <PackageOpen className="h-3 w-3 mr-1 text-orange-600" />,
-          text: "Pendente",
-        };
-      }
-    }
+    
   }
 
   return config;

@@ -9,6 +9,9 @@ export default defineConfig(({ mode }) => {
   return {
     base: "/", // Ensures correct base path for SPA routing
     plugins: [react(), tailwindcss(), ],
+    server: {
+      port:5173,
+    },
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./src"),

@@ -1,3 +1,5 @@
+import { format } from "date-fns";
+
 export const formatCNPJ = (cnpj: string) => {
   if (!cnpj || cnpj.length !== 14) return cnpj;
   return cnpj.replace(
@@ -6,29 +8,29 @@ export const formatCNPJ = (cnpj: string) => {
   );
 };
 
-export const formatCurrency = (value: { toLocaleString: (arg0: string, arg1: { style: string; currency: string; }) => any; }) => {
+export const formatCurrency = (value: number) => {
   return value.toLocaleString("pt-BR", {
     style: "currency",
     currency: "BRL",
   });
 };
 
-export const formatDatePtBr = (dateStr: string | number | Date) => {
+export const formatDatePtBr = (dateStr: string | number | Date | null | undefined): string => {
   if (!dateStr) return "";
-  const date = new Date(dateStr);
+  const date = typeof dateStr === "string" || typeof dateStr === "number" ? new Date(dateStr) : dateStr;
   if (isNaN(date.getTime())) return "";
-  return date.toLocaleDateString("pt-BR");
+  return format(date, "dd/MM/yyyy");
 };
 
-export const parseDate = (str: string) => {
+export const parseDate = (str: string | null | undefined): Date => {
   if (!str) return new Date(0);
-  
+
   // Aceita dd/MM/yyyy ou yyyy-MM-dd
   if (str.includes("/")) {
     const [day, month, year] = str.split("/").map(Number);
-    return new Date(Date.UTC(year, month - 1, day));
+    return new Date(year, month - 1, day); // Cria no fuso horário local
   } else {
     const [year, month, day] = str.split("-").map(Number);
-    return new Date(Date.UTC(year, month - 1, day));
+    return new Date(year, month - 1, day); // Cria no fuso horário local
   }
 };

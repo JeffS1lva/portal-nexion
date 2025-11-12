@@ -6,11 +6,11 @@ import {
   formatCNPJ,
   formatCurrency,
   formatDatePtBr,
+  parseDate,
 } from "@/utils/boletos/formatters";
 import { numericFilter, dateRangeFilter } from "@/utils/boletos/filters";
 import { PaymentDate } from "@/components/pages/BoletosColumns/PaymentDate";
 import { BoletoButton } from "@/components/pages/BoletosColumns/BoletoButton";
-import { StatusBadge } from "@/components/pages/BoletosColumns/StatusBadge";
 import {
   Tooltip,
   TooltipContent,
@@ -21,6 +21,7 @@ import { Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCallback, useMemo } from "react";
 import { PedidosCompraCell } from "@/components/pages/Pedidos/PedidosCompras/PedidosModal";
+import { AlertCircle, Ban, Check, Package, PackageOpen, PackageSearch } from "lucide-react";
 
 interface Parcela {
   codigoBoleto: number;
@@ -40,6 +41,174 @@ interface Parcela {
   id: number;
   pedidosCompra?: string;
 }
+
+// StatusBadge Component
+interface StatusBadgeProps {
+  status: string;
+  dataPagamento?: string | Date | null;
+  dataVencimento: string;
+}
+
+interface StatusConfig {
+  classes: string;
+  icon: React.ReactNode;
+  text: string;
+}
+
+const statusPagamentoOptions = ["Pago", "Pendente", "Atrasado", "Cancelado"];
+const situacaoOptions = ["Normal", "Urgente", "Bloqueado", "Regular"];
+const statusOptions = ["Ativo", "Inativo", "Processando", "Concluído"];
+
+const StatusBadge = ({ status, dataPagamento, dataVencimento }: StatusBadgeProps) => {
+  const currentDate = new Date();
+  currentDate.setHours(0, 0, 0, 0); // Normaliza para meia-noite no fuso local
+
+  const { classes, icon, text } = getStatusConfig(status, dataPagamento, dataVencimento, currentDate);
+
+  return (
+    <div className="w-full inline-flex items-center justify-start">
+      <span
+        className={`w-36 px-3 py-2 rounded-full text-xs font-semibold shadow-sm flex items-center gap-1 ${classes}`}
+        aria-label={`Status: ${text}`}
+      >
+        {icon}
+        {text}
+      </span>
+    </div>
+  );
+};
+
+const getStatusConfig = (
+  status: string,
+  dataPagamento: string | Date | null | undefined,
+  dataVencimento: string,
+  currentDate: Date
+): StatusConfig => {
+  const statusLower = status?.toLowerCase() || "";
+  let config: StatusConfig = {
+    classes: "bg-gray-100 border border-gray-200 text-gray-800",
+    icon: <PackageSearch className="h-3 w-3 mr-1 text-gray-600" />,
+    text: status || "Desconhecido",
+  };
+
+  const vencimento = parseDate(dataVencimento);
+  if (!vencimento || isNaN(vencimento.getTime())) {
+    return {
+      classes: "bg-gray-100 border border-gray-200 text-gray-800",
+      icon: <AlertCircle className="h-3 w-3 mr-1 text-gray-600" />,
+      text: "Data Inválida",
+    };
+  }
+
+  const hasPayment = dataPagamento !== null && dataPagamento !== undefined && dataPagamento !== "";
+  const paymentDate = hasPayment ? new Date(dataPagamento) : null;
+  const isExpired = vencimento < currentDate;
+
+  if (statusPagamentoOptions.map((s) => s.toLowerCase()).includes(statusLower)) {
+    switch (statusLower) {
+      case "pago":
+        config = {
+          classes: "bg-green-100 border border-green-200 text-green-800",
+          icon: <Check className="h-3 w-3 mr-1 text-green-600" />,
+          text: hasPayment && paymentDate && !isNaN(paymentDate.getTime()) && paymentDate <= currentDate
+            ? `Pago em ${formatDatePtBr(dataPagamento)}`
+            : `Pago em ${formatDatePtBr(currentDate)}`,
+        };
+        break;
+      case "pendente":
+        config = {
+          classes: "bg-orange-100 border border-orange-200 text-orange-800",
+          icon: <PackageOpen className="h-3 w-3 mr-1 text-orange-600" />,
+          text: isExpired ? "Atrasado" : "Pendente",
+        };
+        break;
+      case "atrasado":
+        config = {
+          classes: "bg-red-100 border border-red-200 text-red-800",
+          icon: <AlertCircle className="h-3 w-3 mr-1 text-red-600" />,
+          text: hasPayment && paymentDate && !isNaN(paymentDate.getTime()) && paymentDate <= currentDate
+            ? `Atrasado em ${formatDatePtBr(dataPagamento)}`
+            : "Atrasado",
+        };
+        break;
+      case "cancelado":
+        config = {
+          classes: "bg-red-100 border border-red-200 text-red-800",
+          icon: <Ban className="h-3 w-3 mr-1 text-red-600" />,
+          text: "Cancelado",
+        };
+        break;
+    }
+  } else if (situacaoOptions.map((s) => s.toLowerCase()).includes(statusLower)) {
+    switch (statusLower) {
+      case "normal":
+        config = {
+          classes: "bg-blue-100 border border-blue-200 text-blue-800",
+          icon: <Package className="h-3 w-3 mr-1 text-blue-600" />,
+          text: "Normal",
+        };
+        break;
+      case "urgente":
+        config = {
+          classes: "bg-orange-100 border border-orange-200 text-orange-800",
+          icon: <AlertCircle className="h-3 w-3 mr-1 text-orange-600" />,
+          text: "Urgente",
+        };
+        break;
+      case "bloqueado":
+        config = {
+          classes: "bg-red-100 border border-red-200 text-red-800",
+          icon: <Ban className="h-3 w-3 mr-1 text-red-600" />,
+          text: "Bloqueado",
+        };
+        break;
+      case "regular":
+        config = {
+          classes: "bg-teal-100 border border-teal-200 text-teal-800",
+          icon: <Check className="h-3 w-3 mr-1 text-teal-600" />,
+          text: "Regular",
+        };
+        break;
+    }
+  } else if (statusOptions.map((s) => s.toLowerCase()).includes(statusLower)) {
+    switch (statusLower) {
+      case "ativo":
+        config = {
+          classes: "bg-green-100 border border-green-200 text-green-800",
+          icon: <Check className="h-3 w-3 mr-1 text-green-600" />,
+          text: "Ativo",
+        };
+        break;
+      case "inativo":
+        config = {
+          classes: "bg-red-500 border border-gray-200 text-red-100",
+          icon: <Ban className="h-3 w-3 mr-1 text-red-100" />,
+          text: "Inativo",
+        };
+        break;
+      case "processando":
+        config = {
+          classes: "bg-yellow-100 border border-yellow-200 text-yellow-800",
+          icon: <PackageOpen className="h-3 w-3 mr-1 text-yellow-600" />,
+          text: "Processando",
+        };
+        break;
+      case "concluído":
+        config = {
+          classes: "bg-emerald-100 border border-emerald-200 text-emerald-800",
+          icon: <Check className="h-3 w-3 mr-1 text-emerald-600" />,
+          text: hasPayment && paymentDate && !isNaN(paymentDate.getTime()) && paymentDate <= currentDate
+            ? `Concluído `
+            : `Concluído `,
+        };
+        break;
+    }
+  }
+
+  return config;
+};
+
+// ... (o restante do código, incluindo createLoadingModal, removeLoadingModal, createErrorModal, createMockViewer, handleViewDANFE, e columns, permanece inalterado e é idêntico ao fornecido anteriormente)
 
 export const useBoletosColumns = () => {
   const createLoadingModal = useCallback((notaId: string) => {
@@ -241,9 +410,9 @@ export const useBoletosColumns = () => {
       _companyCode: string,
       chaveNFe: string,
       notaId: string,
-      isNotaCancelled: boolean
+      isNotaUnavailable: boolean
     ) => {
-      if (isNotaCancelled) return;
+      if (isNotaUnavailable) return;
 
       const loadingId = createLoadingModal(notaId);
 
@@ -464,10 +633,9 @@ export const useBoletosColumns = () => {
                 <div class="danfe-info">
                   <div style="font-size: 10px; margin-bottom: 5px;">CHAVE DE ACESSO</div>
                   <div style="font-family: monospace; font-size: 12px; font-weight: bold; letter-spacing: 1px;">
-                    ${
-                      chaveNFe ||
-                      "3524 1234 5678 9012 3456 7890 1234 5678 9012 3456 7890 12"
-                    }
+                    ${chaveNFe ||
+          "3524 1234 5678 9012 3456 7890 1234 5678 9012 3456 7890 12"
+          }
                   </div>
                 </div>
               </div>
@@ -521,21 +689,21 @@ export const useBoletosColumns = () => {
                     <div class="field">
                       <span class="field-label">DATA DE EMISSÃO</span>
                       <span class="field-value">${new Date().toLocaleDateString(
-                        "pt-BR"
-                      )}</span>
+            "pt-BR"
+          )}</span>
                     </div>
                     <div class="field">
                       <span class="field-label">DATA DE SAÍDA</span>
                       <span class="field-value">${new Date().toLocaleDateString(
-                        "pt-BR"
-                      )}</span>
+            "pt-BR"
+          )}</span>
                     </div>
                     <div class="field">
                       <span class="field-label">HORA DE SAÍDA</span>
                       <span class="field-value">${new Date().toLocaleTimeString(
-                        "pt-BR",
-                        { hour: "2-digit", minute: "2-digit" }
-                      )}</span>
+            "pt-BR",
+            { hour: "2-digit", minute: "2-digit" }
+          )}</span>
                     </div>
                   </div>
                 </div>
@@ -652,8 +820,8 @@ export const useBoletosColumns = () => {
                     <div class="field">
                       <span class="field-label">PROTOCOLO DE AUTORIZAÇÃO</span>
                       <span class="field-value">135240001234567 - ${new Date().toLocaleDateString(
-                        "pt-BR"
-                      )} ${new Date().toLocaleTimeString("pt-BR")}</span>
+            "pt-BR"
+          )} ${new Date().toLocaleTimeString("pt-BR")}</span>
                     </div>
                   </div>
                 </div>
@@ -702,8 +870,8 @@ export const useBoletosColumns = () => {
           const textClass = status.toLowerCase() === "inativo" ? "text-red-100 bg-red-500 px-2 rounded-sm py-1" : "dark:text-gray-200";
 
           return (
-            <div className="flex items-center gap-1 ">
-              <span className={`block font-medium min-w-[60px] px-2 rounded-sm py-1  ${textClass}`}>
+            <div className="flex items-center gap-1">
+              <span className={`block font-medium min-w-[70px] px-2 rounded-sm py-1 ${textClass}`}>
                 {codigoBoleto ? String(codigoBoleto) : "-"}
               </span>
               <div className="flex gap-1">
@@ -756,27 +924,29 @@ export const useBoletosColumns = () => {
           const notaFiscal = row.original.notaFiscal;
           const companyCode = row.original.filial || "";
           const chaveNFe = row.original.chaveNFe || "";
-          const status =
-            row.original.status || row.original.statusNotaFiscal || "";
+          const status = row.original.status || row.original.statusNotaFiscal || "";
 
-          const isNotaCancelled = ["cancelado", "cancelada"].some((s) =>
-            status.toLowerCase().includes(s)
-          );
+          const isNotaUnavailable =
+            ["cancelado", "cancelada"].some((s) => status.toLowerCase().includes(s)) ||
+            status.toLowerCase() === "inativo";
 
           const hasDANFEData = Boolean(
             (notaFiscal || numNF) &&
-              companyCode &&
-              companyCode.trim() !== "" &&
-              chaveNFe &&
-              chaveNFe.trim() !== ""
+            companyCode &&
+            companyCode.trim() !== "" &&
+            chaveNFe &&
+            chaveNFe.trim() !== ""
           );
 
-          const textClass = isNotaCancelled
+          const textClass = isNotaUnavailable
             ? "text-center font-medium min-w-[70px] text-red-500 line-through"
             : "text-center font-medium min-w-[70px] dark:text-gray-200";
 
           const getTooltipText = () => {
-            if (isNotaCancelled) {
+            if (status.toLowerCase() === "inativo") {
+              return "Esta nota fiscal está indisponível, por isso, não está disponível para visualização.";
+            }
+            if (["cancelado", "cancelada"].some((s) => status.toLowerCase().includes(s))) {
               return "Esta nota fiscal está indisponível, por isso, não está disponível para visualização.";
             }
             if (!hasDANFEData) {
@@ -787,12 +957,11 @@ export const useBoletosColumns = () => {
 
           const handleClick = (e: React.MouseEvent) => {
             e.preventDefault();
-            e.stopPropagation();
-            if (isNotaCancelled || !hasDANFEData) {
+            if (isNotaUnavailable || !hasDANFEData) {
               return;
             }
             const notaId = (notaFiscal || numNF || "").toString();
-            handleViewDANFE(companyCode, chaveNFe, notaId, isNotaCancelled);
+            handleViewDANFE(companyCode, chaveNFe, notaId, isNotaUnavailable);
           };
 
           return (
@@ -804,7 +973,7 @@ export const useBoletosColumns = () => {
                       {numNF ? numNF.toString() : "-"}
                     </span>
                   </TooltipTrigger>
-                  {isNotaCancelled && (
+                  {isNotaUnavailable && (
                     <TooltipContent className="bg-white text-red-800 border border-red-200 shadow-md px-3 py-1.5 rounded-md text-sm">
                       <p>Nota fiscal indisponível.</p>
                     </TooltipContent>
@@ -813,29 +982,33 @@ export const useBoletosColumns = () => {
                 {numNF && (
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Button
-                        variant="bottomPassword"
-                        size="icon"
-                        className={`h-8 w-8 ${
-                          isNotaCancelled
-                            ? "bg-red-600 hover:bg-red-800 text-white cursor-not-allowed opacity-80"
-                            : !hasDANFEData
-                            ? "opacity-50 cursor-not-allowed"
-                            : "cursor-pointer"
-                        }`}
-                        onClick={handleClick}
-                      >
-                        <Eye className="h-4 w-4" />
-                        <span className="sr-only">
-                          {isNotaCancelled
-                            ? "DANFE indisponível: foi cancelada"
-                            : !hasDANFEData
-                            ? "DANFE indisponível"
-                            : "Visualizar DANFE"}
-                        </span>
-                      </Button>
+                      <div className="inline-flex">
+                        <Button
+                          variant="bottomPassword"
+                          size="icon"
+                          className={`h-8 w-8 ${isNotaUnavailable
+                              ? "bg-red-500 hover:bg-red-600 text-white cursor-not-allowed"
+                              : !hasDANFEData
+                                ? "opacity-50 cursor-not-allowed"
+                                : "cursor-pointer"
+                            }`}
+                          onClick={handleClick}
+                          disabled={isNotaUnavailable || !hasDANFEData}
+                          aria-label={getTooltipText()}
+                        >
+                          <Eye className="h-4 w-4" />
+                          <span className="sr-only">{getTooltipText()}</span>
+                        </Button>
+                      </div>
                     </TooltipTrigger>
-                    <TooltipContent>
+                    <TooltipContent
+                      className={`p-2 rounded-md shadow-lg z-[1000] ${isNotaUnavailable
+                          ? "bg-white text-red-800 border border-red-200 shadow-md px-3 py-1.5 rounded-md text-sm"
+                          : "bg-gray-800 text-white border-gray-700"
+                        }`}
+                      side="top"
+                      align="center"
+                    >
                       <p>{getTooltipText()}</p>
                     </TooltipContent>
                   </Tooltip>
