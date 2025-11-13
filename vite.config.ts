@@ -7,16 +7,32 @@ export default defineConfig(({ mode }) => {
   const isProduction = mode === "production";
 
   return {
-    base: "/", // Ensures correct base path for SPA routing
-    plugins: [react(), tailwindcss(), ],
+    base: "/",
+    plugins: [react(), tailwindcss()],
+
+    // PROXY: Só ativo em desenvolvimento
     server: {
-      port:5173,
+      port: 5173,
+      proxy: !isProduction
+        ? {
+            // Todas as chamadas para /api vão para o backend
+            "/api": {
+              target: "http://localhost:3000",
+              changeOrigin: true,
+              secure: false,
+              // Reescrita: /api/login → /users/login
+              rewrite: (path) => path.replace(/^\/api/, "/users"),
+            },
+          }
+        : undefined,
     },
+
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./src"),
       },
     },
+
     build: {
       outDir: "dist",
       assetsDir: "assets",
@@ -26,6 +42,5 @@ export default defineConfig(({ mode }) => {
         input: path.resolve(__dirname, "index.html"),
       },
     },
-   
   } as UserConfig;
 });
