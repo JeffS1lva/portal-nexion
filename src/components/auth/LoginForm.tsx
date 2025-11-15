@@ -52,7 +52,7 @@ export function LoginPage() {
     return () => window.removeEventListener("mousemove", handleMouseMove);
   }, []);
 
-  const API_URL = "/api";
+  const API_URL = import.meta.env.VITE_API_URL;
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,7 +63,6 @@ export function LoginPage() {
       const res = await fetch(`${API_URL}/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include", // ← ESSENCIAL para cookies/sessão
         body: JSON.stringify({ email, password }),
       });
 

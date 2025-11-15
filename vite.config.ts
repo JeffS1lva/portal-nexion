@@ -1,7 +1,7 @@
 import path from "path";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
-import { defineConfig, UserConfig } from "vite";
+import { defineConfig } from "vite";
 
 export default defineConfig(({ mode }) => {
   const isProduction = mode === "production";
@@ -10,17 +10,22 @@ export default defineConfig(({ mode }) => {
     base: "/",
     plugins: [react(), tailwindcss()],
 
-    // PROXY: Só ativo em desenvolvimento
+    define: {
+      __API_URL__: JSON.stringify(
+        isProduction
+          ? "https://portal-nexion.fly.dev/api" // produção
+          : "http://localhost:3000/users" // desenvolvimento (proxy local)
+      ),
+    },
+
     server: {
       port: 5173,
       proxy: !isProduction
         ? {
-            // Todas as chamadas para /api vão para o backend
             "/api": {
               target: "http://localhost:3000",
               changeOrigin: true,
               secure: false,
-              // Reescrita: /api/login → /users/login
               rewrite: (path) => path.replace(/^\/api/, "/users"),
             },
           }
@@ -42,5 +47,5 @@ export default defineConfig(({ mode }) => {
         input: path.resolve(__dirname, "index.html"),
       },
     },
-  } as UserConfig;
+  };
 });
