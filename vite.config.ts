@@ -1,3 +1,4 @@
+// vite.config.ts
 import path from "path";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
@@ -5,31 +6,44 @@ import { defineConfig } from "vite";
 
 export default defineConfig(({ mode }) => {
   const isProduction = mode === "production";
+  const isPreview = mode === "preview"; // para vercel/fly preview
 
   return {
     base: "/",
     plugins: [react(), tailwindcss()],
 
+    // URL base da API (com /users no final)
     define: {
-      __API_URL__: JSON.stringify(
-        isProduction
-          ? "https://portal-nexion.fly.dev/api" // produção
-          : "http://localhost:3000/users" // desenvolvimento (proxy local)
+      "import.meta.env.VITE_API_URL": JSON.stringify(
+        isProduction || isPreview
+          ? "https://portal-nexion.fly.dev/users"
+          : "http://localhost:3000/users"
       ),
     },
 
     server: {
       port: 5173,
-      proxy: !isProduction
-        ? {
+      host: true, // permite acesso externo (útil em rede local)
+      open: true,
+
+      // Proxy só em desenvolvimento
+      proxy: isProduction
+        ? undefined
+        : {
             "/api": {
               target: "http://localhost:3000",
               changeOrigin: true,
               secure: false,
+              // Converte /api/login → /users/login
               rewrite: (path) => path.replace(/^\/api/, "/users"),
             },
-          }
-        : undefined,
+          },
+    },
+
+    preview: {
+      port: 4173,
+      // Em preview (fly deploy --preview), também usa HTTPS direto
+      proxy: undefined,
     },
 
     resolve: {
@@ -42,7 +56,7 @@ export default defineConfig(({ mode }) => {
       outDir: "dist",
       assetsDir: "assets",
       emptyOutDir: true,
-      sourcemap: !isProduction,
+      sourcemap: isProduction ? false : "inline",
       rollupOptions: {
         input: path.resolve(__dirname, "index.html"),
       },

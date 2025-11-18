@@ -14,18 +14,48 @@ import {
   BarChart3,
   Clock,
   Crown,
-  X,
   Zap,
-  Shield,
   Users,
   UserPlus,
   ArrowRight,
+  Shield,
   Star,
+  X,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom"; // <-- ADICIONADO
+import { useNavigate } from "react-router-dom";
+import axios, { AxiosResponse, AxiosError } from "axios";
+
+
+const api = axios.create({
+  baseURL: import.meta.env.DEV
+    ? "/api"
+    : import.meta.env.VITE_API_URL,
+  timeout: 10000,
+  headers: { "Content-Type": "application/json" },
+});
+
+api.interceptors.response.use(
+  (response: AxiosResponse) => response,
+  (error: AxiosError<{ error?: string }>) => {
+    const message =
+      error.response?.data?.error ||
+      error.message ||
+      "Erro de conexão. Tente novamente.";
+    return Promise.reject(new Error(message));
+  }
+);
+
+// Interceptador de requisições (adiciona token automaticamente)
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
 export function LoginPage() {
-  const navigate = useNavigate(); // <-- ADICIONADO
+  const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -44,7 +74,7 @@ export function LoginPage() {
 
   // Mouse tracking para efeito parallax
   useEffect(() => {
-    const handleMouseMove = (e: { clientX: React.SetStateAction<number>; clientY: React.SetStateAction<number>; }) => {
+    const handleMouseMove = (e: MouseEvent) => {
       setMouseX(e.clientX);
       setMouseY(e.clientY);
     };
@@ -52,40 +82,41 @@ export function LoginPage() {
     return () => window.removeEventListener("mousemove", handleMouseMove);
   }, []);
 
-  const API_URL = import.meta.env.VITE_API_URL;
-
+  // === FUNÇÃO DE LOGIN COM AXIOS ===
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
     try {
-      const res = await fetch(`${API_URL}/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+      const response: AxiosResponse<{ token: string; user: any }> = await api.post(
+        "/login",
+        {
+          email: email.trim().toLowerCase(),
+          password,
+        }
+      );
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Login falhou");
+      const { token, user } = response.data;
 
-      // SALVA NO localStorage
-      localStorage.setItem("token", data.token);
+      // Salva no localStorage
+      localStorage.setItem("token", token);
       localStorage.setItem("isAuthenticated", "true");
-      localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("user", JSON.stringify(user));
 
-      // DISPARA EVENTO
+      // Dispara evento global
       window.dispatchEvent(new Event("authStateChange"));
 
-      // REDIRECIONA
+      // Redireciona
       navigate("/inicio", { replace: true });
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || "Falha ao fazer login. Verifique suas credenciais.");
     } finally {
       setLoading(false);
     }
   };
 
+  // === FUNÇÃO DE REGISTRO COM AXIOS ===
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -93,7 +124,7 @@ export function LoginPage() {
     setSuccess(null);
 
     // Validação básica
-    if (!firstName || !lastName || !email || !password) {
+    if (!firstName.trim() || !lastName.trim() || !email.trim() || !password) {
       setError("Todos os campos são obrigatórios");
       setLoading(false);
       return;
@@ -102,38 +133,27 @@ export function LoginPage() {
     const fullName = `${firstName.trim()} ${lastName.trim()}`;
 
     try {
-      const res = await fetch(`${API_URL}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: fullName,
-          email: email.toLowerCase().trim(),
-          password,
-        }),
+      await api.post("/", {
+        name: fullName,
+        email: email.toLowerCase().trim(),
+        password,
       });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Erro ao criar conta");
-      }
 
       setSuccess("Cadastro realizado com sucesso! Faça login.");
 
-      // Limpa os campos após sucesso
+      // Limpa os campos
       setFirstName("");
       setLastName("");
       setEmail("");
       setPassword("");
 
-      // Opcional: troca para aba de login após 2s
+      // Troca para login após 2 segundos
       setTimeout(() => {
         setActiveTab("login");
         setSuccess(null);
       }, 2000);
-
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || "Erro ao criar conta. Tente novamente.");
     } finally {
       setLoading(false);
     }
@@ -203,7 +223,7 @@ export function LoginPage() {
         />
 
         <motion.div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-br from-pink-400/20 to-rose-400/20 dark:from-pink-600/10 dark:to-rose-600/10 rounded-full blur-3xl"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w2-96 h-96 bg-gradient-to-br from-pink-400/20 to-rose-400/20 dark:from-pink-600/10 dark:to-rose-600/10 rounded-full blur-3xl"
           animate={{ scale: [1, 1.3, 1], rotate: [0, 90, 0] }}
           transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
         />
@@ -1109,6 +1129,5 @@ export function LoginPage() {
         )}
       </AnimatePresence>
     </div>
-
   );
 }
