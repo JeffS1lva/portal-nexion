@@ -40,6 +40,13 @@ export function useAuth() {
     return () => window.removeEventListener("authStateChange", updateAuth);
   }, []);
 
+  const login = (token: string, userData: User) => {
+    localStorage.setItem("token", token);
+    localStorage.setItem("isAuthenticated", "true");
+    localStorage.setItem("user", JSON.stringify(userData));
+    window.dispatchEvent(new Event("authStateChange"));
+  };
+
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("isAuthenticated");
@@ -48,5 +55,5 @@ export function useAuth() {
     window.dispatchEvent(new Event("authStateChange"));
   };
 
-  return { user, isAuthenticated, logout };
+  return { user, isAuthenticated, login, logout };
 }

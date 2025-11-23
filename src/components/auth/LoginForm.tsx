@@ -23,40 +23,15 @@ import {
   X,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import axios, { AxiosResponse, AxiosError } from "axios";
+import api from "@/Api/api";  // ← IMPORTA A INSTÂNCIA ÚNICA E CORRETA
+import { useAuth } from "./hooks/useAuth";
 
 
-const api = axios.create({
-  baseURL: import.meta.env.DEV
-    ? "/api"
-    : import.meta.env.VITE_API_URL,
-  timeout: 10000,
-  headers: { "Content-Type": "application/json" },
-});
-
-api.interceptors.response.use(
-  (response: AxiosResponse) => response,
-  (error: AxiosError<{ error?: string }>) => {
-    const message =
-      error.response?.data?.error ||
-      error.message ||
-      "Erro de conexão. Tente novamente.";
-    return Promise.reject(new Error(message));
-  }
-);
-
-// Interceptador de requisições (adiciona token automaticamente)
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
 
 export function LoginPage() {
   const navigate = useNavigate();
 
+  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
@@ -82,82 +57,74 @@ export function LoginPage() {
     return () => window.removeEventListener("mousemove", handleMouseMove);
   }, []);
 
-  // === FUNÇÃO DE LOGIN COM AXIOS ===
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
+  // Dentro do seu LoginPage.tsx
 
-    try {
-      const response: AxiosResponse<{ token: string; user: any }> = await api.post(
-        "/login",
-        {
-          email: email.trim().toLowerCase(),
-          password,
-        }
-      );
-
-      const { token, user } = response.data;
-
-      // Salva no localStorage
-      localStorage.setItem("token", token);
-      localStorage.setItem("isAuthenticated", "true");
-      localStorage.setItem("user", JSON.stringify(user));
-
-      // Dispara evento global
-      window.dispatchEvent(new Event("authStateChange"));
-
-      // Redireciona
-      navigate("/inicio", { replace: true });
-    } catch (err: any) {
-      setError(err.message || "Falha ao fazer login. Verifique suas credenciais.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // === FUNÇÃO DE REGISTRO COM AXIOS ===
-  const handleRegister = async (e: React.FormEvent) => {
+  // FUNÇÃO DE LOGIN (com .then() e .catch())
+  const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
     setSuccess(null);
 
-    // Validação básica
-    if (!firstName.trim() || !lastName.trim() || !email.trim() || !password) {
-      setError("Todos os campos são obrigatórios");
+    // Depois do login bem-sucedido
+    api.post("/users/login", { email, password })
+      .then((response) => {
+        const { token, user, message } = response.data;
+
+        // Salva os dados
+        localStorage.setItem("authToken", token);
+        localStorage.setItem("user", JSON.stringify(user));
+
+        login(token, user)
+
+        setSuccess(message || "Login realizado com sucesso!");
+
+        // Redireciona imediatamente
+        navigate("/inicio", { replace: true });
+      })
+      .catch((err) => {
+        const msg = err.response?.data?.error || "Email ou senha incorretos";
+        setError(msg);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  };
+
+  // FUNÇÃO DE CADASTRO (com .then() e .catch())
+  const handleRegister = (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    setSuccess(null);
+
+    const name = `${firstName} ${lastName}`.trim();
+
+    if (!name || !email || !password) {
+      setError("Preencha todos os campos");
       setLoading(false);
       return;
     }
 
-    const fullName = `${firstName.trim()} ${lastName.trim()}`;
-
-    try {
-      await api.post("/", {
-        name: fullName,
-        email: email.toLowerCase().trim(),
-        password,
-      });
-
-      setSuccess("Cadastro realizado com sucesso! Faça login.");
-
-      // Limpa os campos
-      setFirstName("");
-      setLastName("");
-      setEmail("");
-      setPassword("");
-
-      // Troca para login após 2 segundos
-      setTimeout(() => {
+    api
+      .post("/users", { name, email, password })
+      .then(() => {
+        setSuccess("Conta criada com sucesso! Faça login agora.");
+        setFirstName("");
+        setLastName("");
+        setEmail("");
+        setPassword("");
         setActiveTab("login");
-        setSuccess(null);
-      }, 2000);
-    } catch (err: any) {
-      setError(err.message || "Erro ao criar conta. Tente novamente.");
-    } finally {
-      setLoading(false);
-    }
+      })
+      .catch((err) => {
+        const msg = err.response?.data?.error || "Erro ao criar conta";
+        setError(msg);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   };
+
 
   const features = [
     {
