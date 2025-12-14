@@ -18,6 +18,7 @@ import {
   Award,
   Users,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 interface NavigationItem {
   title: string;
@@ -234,13 +235,13 @@ export function Init({ authData }: InitProps) {
                           <span>Ver Pedidos</span>
                           <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                         </a>
-                        <a
-                          href="/dashboard"
+                        <Link
+                          to="/dashboard"
                           className="group inline-flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-full text-white font-bold transition-all duration-300 border-2 border-white/30"
                         >
                           <TrendingUp className="w-5 h-5" />
                           <span>Dashboard</span>
-                        </a>
+                        </Link>
                       </div>
                     </div>
 
@@ -347,9 +348,9 @@ export function Init({ authData }: InitProps) {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
             {navigationItems.map((item, index) => (
-              <a
+              <Link
                 key={index}
-                href={item.url}
+                to={item.url}
                 onMouseEnter={() => setHoveredCard(index)}
                 onMouseLeave={() => setHoveredCard(null)}
                 className="group relative block"
@@ -400,7 +401,7 @@ export function Init({ authData }: InitProps) {
                   />
                   <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-700 to-transparent" />
                 </div>
-              </a>
+              </Link>
             ))}
           </div>
         </div>
