@@ -14,6 +14,7 @@ import {
   Sun,
   Moon,
   ChartNoAxesCombined,
+  Lock,
 } from "lucide-react";
 import LogoDesktop from "@/assets/logoDesktop.svg";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@radix-ui/react-dropdown-menu";
@@ -85,7 +86,6 @@ const getUserStorageKey = (email: string) => `userProfile_${email}`;
 const ThemeAwareLogo = () => {
   const { isMobile, isTablet, isDesktop } = useScreenSize();
 
-  // Determina a altura da logo baseado no tamanho da tela
   const getLogoHeight = () => {
     if (isMobile) return "h-16";
     if (isTablet) return "h-16";
@@ -95,27 +95,20 @@ const ThemeAwareLogo = () => {
   return (
     <Link to="/inicio" className="flex items-center gap-2 sm:gap-3 group">
       <div className="relative flex-shrink-0 transition-transform duration-300 group-hover:scale-105">
-        {/* Logo para tema claro */}
         <img
           src={LogoDesktop}
           alt="Logo"
           className={`${getLogoHeight()} w-auto object-contain block dark:hidden transition-all duration-300 `}
         />
-
-        {/* Logo para tema escuro */}
         <img
           src={LogoDesktop}
           alt="Logo"
           className={`${getLogoHeight()} w-auto object-contain hidden dark:block transition-all duration-300`}
         />
       </div>
-
-      {/* Texto/título opcional ao lado da logo (se necessário) */}
       {isDesktop && (
         <div className="hidden lg:block">
-          <h1 className="text-lg xl:text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
-            {/* Seu título aqui, se necessário */}
-          </h1>
+          <h1 className="text-lg xl:text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent"></h1>
         </div>
       )}
     </Link>
@@ -194,6 +187,7 @@ export function NavegationMenu({
     login?: string;
     email?: string;
     avatarUrl?: string;
+    isPremium?: boolean; // <- novo campo premium
   } | null;
 }) {
   const [userLogin, setUserLogin] = useState("");
@@ -231,11 +225,9 @@ export function NavegationMenu({
   const setDefaultUserData = () => {
     if (authData) {
       if (authData.firstName) {
-        // Usa apenas o firstName se lastName estiver vazio
         const fullName = authData.lastName ? `${authData.firstName} ${authData.lastName}` : authData.firstName;
         setUserLogin(fullName);
       } else if (authData.email) {
-        // Extrai e capitaliza o nome do email
         const emailUsername = authData.email.split("@")[0];
         const firstName = emailUsername.charAt(0).toUpperCase() + emailUsername.slice(1);
         setUserLogin(firstName);
@@ -263,7 +255,6 @@ export function NavegationMenu({
 
     window.addEventListener("userProfileUpdated", handleProfileUpdate as EventListener);
 
-    // Fechar menu mobile quando redimensionar para desktop
     const handleResize = () => {
       if (window.innerWidth >= 1024 && isMobileMenuOpen) {
         setIsMobileMenuOpen(false);
@@ -282,41 +273,27 @@ export function NavegationMenu({
     try {
       setIsLoggingOut(true);
 
-      // Make a POST request to the /api/logout endpoint
       const response = await fetch('http://127.0.0.1:5000/api/logout', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include', // Include cookies in the request
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
       });
 
-      if (!response.ok) {
-        throw new Error('Erro ao fazer logout no servidor');
-      }
+      if (!response.ok) throw new Error('Erro ao fazer logout no servidor');
 
-      // Clear local data
       localStorage.removeItem('isAuthenticated');
       localStorage.removeItem('authData');
       localStorage.removeItem('token');
       sessionStorage.clear();
 
-      // Call the parent component's onLogout callback
-      if (onLogout) {
-        onLogout();
-      }
-
-      // Navigate to the login page
+      if (onLogout) onLogout();
       navigate('/login');
     } catch (error) {
-      // Even if the server request fails, clear local data and navigate to login
       localStorage.removeItem('isAuthenticated');
       localStorage.removeItem('authData');
       localStorage.removeItem('token');
       sessionStorage.clear();
-      if (onLogout) {
-        onLogout();
-      }
+      if (onLogout) onLogout();
       navigate('/login');
     } finally {
       setIsLoggingOut(false);
@@ -327,78 +304,34 @@ export function NavegationMenu({
     setResetPasswordOpen(true);
   };
 
-  const openUserProfileModal = () => {
-    setUserProfileOpen(true);
-  };
+  const openUserProfileModal = () => setUserProfileOpen(true);
+  const closeUserProfileModal = () => setUserProfileOpen(false);
 
-  const closeUserProfileModal = () => {
-    setUserProfileOpen(false);
-  };
-
-  const handleSaveUserChanges = async (userData: {
-    name: string;
-    avatarUrl: string | null;
-  }) => {
+  const handleSaveUserChanges = async (userData: { name: string; avatarUrl: string | null }) => {
     try {
       setUserLogin(userData.name);
       setAvatarUrl(userData.avatarUrl);
 
       if (authData?.email) {
         const storageKey = getUserStorageKey(authData.email);
-        localStorage.setItem(
-          storageKey,
-          JSON.stringify({
-            name: userData.name,
-            avatarUrl: userData.avatarUrl,
-          }),
-        );
+        localStorage.setItem(storageKey, JSON.stringify({ name: userData.name, avatarUrl: userData.avatarUrl }));
       }
 
       await new Promise((resolve) => setTimeout(resolve, 800));
-
       return true;
     } catch (error) {
       return false;
     }
   };
 
-  const closeModal = () => {
-    setResetPasswordOpen(false);
-  };
+  const closeModal = () => setResetPasswordOpen(false);
+  const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
+  const isActiveRoute = (url: string) => location.pathname === url;
 
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
-
-  const isActiveRoute = (url: string) => {
-    return location.pathname === url;
-  };
-
-  // Calcular tamanhos responsivos para diferentes elementos
-  const getHeaderHeight = () => {
-    if (isMobile) return "h-14";
-    if (isTablet) return "h-15";
-    return "h-16";
-  };
-
-  const getAvatarSize = () => {
-    if (isMobile) return "h-7 w-7";
-    if (isTablet) return "h-8 w-8";
-    return "h-8 w-8";
-  };
-
-  const getAvatarSizeLarge = () => {
-    if (isMobile) return "h-10 w-10";
-    if (isTablet) return "h-11 w-11";
-    return "h-12 w-12";
-  };
-
-  const getContainerPadding = () => {
-    if (isMobile) return "px-3";
-    if (isTablet) return "px-4";
-    if (isLargeScreen) return "px-8";
-    return "px-6";
-  };
+  const getHeaderHeight = () => (isMobile ? "h-14" : isTablet ? "h-15" : "h-16");
+  const getAvatarSize = () => (isMobile ? "h-7 w-7" : isTablet ? "h-8 w-8" : "h-8 w-8");
+  const getAvatarSizeLarge = () => (isMobile ? "h-10 w-10" : isTablet ? "h-11 w-11" : "h-12 w-12");
+  const getContainerPadding = () => (isMobile ? "px-3" : isTablet ? "px-4" : isLargeScreen ? "px-8" : "px-6");
 
   return (
     <>
@@ -406,12 +339,10 @@ export function NavegationMenu({
       <header className="sticky top-0 z-50 w-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border-b border-gray-200/50 dark:border-gray-700/50 shadow-sm">
         <div className={`${getContainerPadding()}`}>
           <div className={`flex items-center justify-between ${getHeaderHeight()}`}>
-            {/* Logo */}
             <div className="flex items-center min-w-0 flex-shrink-0">
               <ThemeAwareLogo />
             </div>
 
-            {/* Navegação Desktop - Oculta em telas menores que lg */}
             <nav className="hidden lg:flex items-center space-x-1 xl:space-x-2">
               {items.map((item) => {
                 const isActive = isActiveRoute(item.url);
@@ -433,12 +364,9 @@ export function NavegationMenu({
               })}
             </nav>
 
-            {/* Controles do Header */}
             <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-              {/* Toggle de Tema */}
               <ThemeToggle />
 
-              {/* Menu do Usuário */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -456,24 +384,14 @@ export function NavegationMenu({
                         )}
                       </Avatar>
                     </div>
-                    <span
-                      className={`hidden sm:block ${isMobile ? "text-xs" : "text-sm"} font-medium text-gray-700 dark:text-gray-200 truncate ${
-                        isMobile ? "max-w-16" : isTablet ? "max-w-24" : "max-w-32"
-                      }`}
-                    >
+                    <span className={`hidden sm:block ${isMobile ? "text-xs" : "text-sm"} font-medium text-gray-700 dark:text-gray-200 truncate ${isMobile ? "max-w-16" : isTablet ? "max-w-24" : "max-w-32"}`}>
                       {userLogin || "Usuário"}
                     </span>
-                    <ChevronDown
-                      className={`${isMobile ? "w-3 h-3" : "w-4 h-4"} text-gray-500 transition-transform duration-200 hidden sm:block flex-shrink-0`}
-                    />
+                    <ChevronDown className={`${isMobile ? "w-3 h-3" : "w-4 h-4"} text-gray-500 transition-transform duration-200 hidden sm:block flex-shrink-0`} />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  side="bottom"
-                  align="end"
-                  className={`${isMobile ? "w-64" : isTablet ? "w-68" : "w-72"} bg-white/95 dark:bg-gray-800/95 backdrop-blur-lg border border-gray-200/50 dark:border-gray-700/50 rounded-xl shadow-xl p-2 mt-2`}
-                >
-                  {/* Perfil do Usuário */}
+
+                <DropdownMenuContent side="bottom" align="end" className={`${isMobile ? "w-64" : isTablet ? "w-68" : "w-72"} bg-white/95 dark:bg-gray-800/95 backdrop-blur-lg border border-gray-200/50 dark:border-gray-700/50 rounded-xl shadow-xl p-2 mt-2`}>
                   <DropdownMenuItem
                     className={`flex items-center gap-3 ${isMobile ? "p-3" : "p-4"} rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 dark:hover:from-blue-900/20 dark:hover:to-purple-900/20 cursor-pointer outline-none transition-all duration-200`}
                     onClick={openUserProfileModal}
@@ -502,15 +420,27 @@ export function NavegationMenu({
 
                   <div className="border-t border-gray-200/50 dark:border-gray-600/50 my-2"></div>
 
-                  {/* Alterar Senha */}
+                  {/* Alterar Senha - Premium */}
                   <DropdownMenuItem
-                    className={`flex items-center gap-3 ${isMobile ? "p-2.5" : "p-3"} rounded-lg hover:bg-gray-100/80 dark:hover:bg-gray-700/80 cursor-pointer outline-none transition-all duration-200`}
-                    onClick={handlePasswordReset}
+                    className={`flex items-center gap-3 ${isMobile ? "p-2.5" : "p-3"} rounded-lg outline-none transition-all duration-200 ${
+                      authData?.isPremium
+                        ? "hover:bg-gray-100/80 dark:hover:bg-gray-700/80 cursor-pointer"
+                        : "opacity-50 cursor-not-allowed"
+                    }`}
+                    onClick={() => {
+                      if (authData?.isPremium) handlePasswordReset();
+                    }}
                   >
-                    <div className={`${isMobile ? "p-1" : "p-1.5"} rounded-lg bg-gray-100 dark:bg-gray-700 flex-shrink-0`}>
-                      <Settings className={`${isMobile ? "w-3.5 h-3.5" : "w-4 h-4"} text-gray-600 dark:text-gray-300`} />
+                    <div className={`${isMobile ? "p-1" : "p-1.5"} rounded-lg bg-gray-100 dark:bg-gray-700 flex-shrink-0 flex items-center justify-center`}>
+                      {authData?.isPremium ? (
+                        <Settings className={`${isMobile ? "w-3.5 h-3.5" : "w-4 h-4"} text-gray-600 dark:text-gray-300`} />
+                      ) : (
+                        <Lock className={`${isMobile ? "w-3.5 h-3.5" : "w-4 h-4"} text-gray-600 dark:text-gray-300`} />
+                      )}
                     </div>
-                    <span className={`${isMobile ? "text-sm" : "text-base"} text-gray-700 dark:text-gray-200 font-medium`}>Alterar senha</span>
+                    <span className={`${isMobile ? "text-sm" : "text-base"} text-gray-700 dark:text-gray-200 font-medium`}>
+                      Alterar senha {!authData?.isPremium && "(Premium)"}
+                    </span>
                   </DropdownMenuItem>
 
                   <div className="border-t border-gray-200/50 dark:border-gray-600/50 my-2"></div>
@@ -532,7 +462,6 @@ export function NavegationMenu({
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              {/* Toggle Mobile Menu - Visível apenas em telas menores que lg */}
               <Button
                 variant="ghost"
                 size="sm"
@@ -548,7 +477,6 @@ export function NavegationMenu({
             </div>
           </div>
 
-          {/* Menu Mobile - Responsivo para diferentes tamanhos de tela */}
           {isMobileMenuOpen && (
             <div className="lg:hidden border-t border-gray-200/50 dark:border-gray-700/50 py-3 sm:py-4 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm">
               <nav className="flex flex-col space-y-1">
@@ -577,18 +505,12 @@ export function NavegationMenu({
         </div>
       </header>
 
-      {/* Modal de Redefinição de Senha */}
       {isResetPasswordOpen && <ResetPassword closeModal={closeModal} />}
 
-      {/* Modal de Perfil do Usuário */}
       <ProfileSelector
         isOpen={isUserProfileOpen}
         onClose={closeUserProfileModal}
-        currentUser={{
-          name: userLogin,
-          email: userEmail,
-          avatarUrl: avatarUrl,
-        }}
+        currentUser={{ name: userLogin, email: userEmail, avatarUrl: avatarUrl }}
         onSaveChanges={handleSaveUserChanges}
       />
     </>

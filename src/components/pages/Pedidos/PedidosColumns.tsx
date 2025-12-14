@@ -23,7 +23,7 @@ interface Pedido {
   dataLancamentoPedido: string;
   dataParaEntrega: string;
   statusDoPedido: string;
-  dataPicking: string;
+  dataPicking: string | null
   statusPicking: string;
   notaFiscal: string;
   chaveNFe: string;
@@ -353,9 +353,8 @@ startxref
                     <button
                       onClick={handleViewPedido}
                       disabled={!hasNotaFiscal}
-                      className={`inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background bg-primary text-primary-foreground hover:bg-primary/90 h-8 w-8 p-0 cursor-pointer ${
-                        !hasNotaFiscal ? "opacity-50 cursor-not-allowed" : ""
-                      }`}
+                      className={`inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background bg-primary text-primary-foreground hover:bg-primary/90 h-8 w-8 p-0 cursor-pointer ${!hasNotaFiscal ? "opacity-50 cursor-not-allowed" : ""
+                        }`}
                     >
                       <Eye className="h-4 w-4" />
                       <span className="sr-only">Visualizar</span>
@@ -449,11 +448,69 @@ startxref
       accessorKey: "statusPicking",
       header: "Status Picking",
       cell: ({ row }) => {
-        const { classes, icon, text } = getStatusConfig(row.getValue("statusPicking"));
+        const statusPedido = row.original.statusDoPedido;
+        const statusNF = row.original.statusNotaFiscal || "Pendente";
+        const dataEntrega = row.original.dataParaEntrega;
+
+        // 1. Pedido cancelado ou NF cancelada → picking cancelado
+        if (statusPedido === "Cancelado" || statusNF === "Cancelada") {
+          return (
+            <div className="inline-flex w-32 items-center justify-center rounded-full bg-red-100 px-3 py-2 text-xs font-semibold text-red-800 shadow-sm border border-red-200">
+              <Ban className="mr-1.5 h-3 w-3" />
+              Cancelado
+            </div>
+          );
+        }
+
+        // 2. Ainda pendente ativação → picking nem começou
+        if (statusPedido === "Pendente Ativação") {
+          return (
+            <div className="inline-flex w-32 items-center justify-center rounded-full bg-gray-100 px-3 py-2 text-xs font-semibold text-gray-600 shadow-sm border border-gray-200">
+              <PackageSearch className="mr-1.5 h-3 w-3" />
+              Sem Picking
+            </div>
+          );
+        }
+
+        // 3. Pedido ativado, mas NF ainda pendente → configuração pendente
+        if (statusPedido === "Ativado" && statusNF === "Pendente") {
+          return (
+            <div className="inline-flex w-32 items-center justify-center rounded-full bg-yellow-100 px-3 py-2 text-xs font-semibold text-yellow-800 shadow-sm border border-yellow-200">
+              <AlertCircle className="mr-1.5 h-3 w-3" />
+              Config. Pendente
+            </div>
+          );
+        }
+
+        // 4. Pedido ativado + NF autorizada → picking pendente (separação)
+        if (statusPedido === "Ativado" && statusNF === "Autorizada") {
+          // Bonus: se já passou da data de entrega, consideramos concluído (opcional)
+          const hoje = new Date();
+          const dataEntregaDate = new Date(dataEntrega);
+          const atrasado = hoje > dataEntregaDate;
+
+          if (atrasado) {
+            return (
+              <div className="inline-flex w-32 items-center justify-center rounded-full bg-emerald-100 px-3 py-2 text-xs font-semibold text-emerald-800 shadow-sm border border-emerald-200">
+                <Check className="mr-1.5 h-3 w-3" />
+                Concluído
+              </div>
+            );
+          }
+
+          return (
+            <div className="inline-flex w-32 items-center justify-center rounded-full bg-amber-100 px-3 py-2 text-xs font-semibold text-amber-800 shadow-sm border border-amber-200">
+              <PackageOpen className="mr-1.5 h-3 w-3" />
+              Pendente
+            </div>
+          );
+        }
+
+        // 5. Qualquer outro caso (Renovado, etc) → tratamos como concluído ou pendente
         return (
-          <div className={`w-full inline-flex items-center px-3 py-2 rounded-full text-xs font-semibold shadow-sm ${classes}`}>
-            {icon}
-            {text || row.getValue("statusPicking")}
+          <div className="inline-flex w-32 items-center justify-center rounded-full bg-gray-100 px-3 py-2 text-xs font-semibold text-gray-600 shadow-sm border border-gray-200">
+            <PackageSearch className="mr-1.5 h-3 w-3" />
+            Sem Picking
           </div>
         );
       },
@@ -848,13 +905,12 @@ startxref
               </TooltipTrigger>
               {notaTooltipMessage && (
                 <TooltipContent
-                  className={`bg-white border shadow-md px-3 py-1.5 rounded-md text-sm ${
-                    isNotaCancelled
-                      ? "text-red-800 border-red-200"
-                      : isNotaPending
-                        ? "text-orange-800 border-orange-200"
-                        : "text-gray-800 border-gray-200"
-                  }`}
+                  className={`bg-white border shadow-md px-3 py-1.5 rounded-md text-sm ${isNotaCancelled
+                    ? "text-red-800 border-red-200"
+                    : isNotaPending
+                      ? "text-orange-800 border-orange-200"
+                      : "text-gray-800 border-gray-200"
+                    }`}
                 >
                   <p>{notaTooltipMessage}</p>
                 </TooltipContent>

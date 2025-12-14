@@ -87,7 +87,7 @@ export const Paginacao: React.FC<PaginacaoProps> = ({
   if (pageCount <= 1) return null;
 
   return (
-    <div className="flex sm:w-full sm:flex-row items-center gap-3 sm:gap-4   sm:px-0">
+    <div className="flex sm:w-full sm:flex-row  gap-3 sm:gap-4   sm:px-0">
       {/* Info e controles principais */}
 
 

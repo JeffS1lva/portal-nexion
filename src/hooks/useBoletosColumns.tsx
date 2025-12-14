@@ -857,6 +857,7 @@ export const useBoletosColumns = () => {
 
   const columns: ColumnDef<Parcela, any>[] = useMemo(
     () => [
+      
       {
         accessorKey: "codigoBoleto",
         header: "Código",

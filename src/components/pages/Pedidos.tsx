@@ -1,26 +1,56 @@
-
 import * as React from "react"
 import {
   flexRender,
   getCoreRowModel,
   useReactTable,
-  type SortingState,
   getSortedRowModel,
-  type ColumnFiltersState,
   getFilteredRowModel,
   getPaginationRowModel,
+  getExpandedRowModel,
+  type SortingState,
+  type ColumnFiltersState,
   type VisibilityState,
+  type ExpandedState,
 } from "@tanstack/react-table"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Textarea } from "@/components/ui/textarea"
+import { toast } from "sonner"
 import { Paginacao } from "./Paginacao"
-import { format, subDays, subMonths, subYears } from "date-fns"
 import { PedidosFilter } from "./Pedidos/PedidosFilter"
 import { usePedidosColumns, type Pedido } from "./Pedidos/PedidosColumns"
+import { format, subDays, subMonths, subYears } from "date-fns"
+import { cn } from "@/lib/utils"
+import {
+  ChevronDown,
+  ChevronRight,
+  Package,
+  FileText,
+  Truck,
+  Building2,
+  Copy,
+  CheckCircle2,
+  Clock,
+  AlertCircle,
+  FileCode2,
+  Receipt,
+  Download,
+  ExternalLink,
+  FileArchive,
+} from "lucide-react"
 
-// Tipos para os filtros
 type PeriodFilter = "ultimoMes" | "ultimos90Dias" | "ultimoAno" | "todos"
 type SearchType =
   | "numeroPedido"
@@ -31,95 +61,40 @@ type SearchType =
   | "pedidosCompra"
 
 const generateFictionalPedidos = (): Pedido[] => {
-  const statusesPedido = ["Pendente Ativação", "Ativado", "Renovado", "Cancelado"]
-  const statusesPicking = ["Configuração Pendente", "Configurado", "Pendente", "Concluído"]
-  const statusesNotaFiscal = ["Autorizada", "Cancelada", "Pendente"]
-
-  const nomes = [
-    "TechNova Softwares Ltda",
-    "DigitalFlow Soluções SA",
-    "CodeMaster Desenvolvimento EIRELI",
-    "ByteSolutions ME",
-    "SoftPeak Enterprise EPP",
-    "InnoTech & Cia",
-    "DataWave Importadora Digital",
-    "CloudForge Atacado Tech",
-    "NetCore Varejo Digital",
-    "AlgoRhythm Licenças Ltda",
-  ]
-
-  const parceiros = [
-    "Parceiro Microsoft",
-    "Revenda AWS",
-    "Venda Direta",
-    "Parceiro Google Cloud",
-    "Revenda Oracle",
-    "Parceiro Salesforce",
-    "Integração Interna",
-    "Revenda IBM",
-    null, // Algumas vendas diretas sem parceiro
-    "Parceiro SAP",
-  ]
-
-  const estados = ["SP", "RJ", "MG", "RS", "PR", "SC", "BA", "GO", "PE", "CE"]
-  const grupos = ["GRUPO_ENTERPRISE", "GRUPO_STARTUP", "GRUPO_CORPORATE"]
-  const filiais = ["001-SAO", "002-RIO", "003-BH", "004-POR", "005-FLO"]
-
-  const produtos = [
-    "ERP Enterprise Pro",
-    "CRM Cloud Suite",
-    "Office Productivity Pack",
-    "Database Manager Advanced",
-    "Analytics BI Tool",
-    "Security Firewall Software",
-    "DevOps Pipeline Manager",
-    "HR Management System",
-    "E-commerce Platform",
-    "Mobile App Builder",
-  ]
-
   const pedidos: Pedido[] = []
 
-  for (let i = 1; i <= 100; i++) {
-    // Datas mais realistas para vendas de software
+  for (let i = 1; i <= 120; i++) {
     const dataLancamento = new Date()
-    dataLancamento.setDate(dataLancamento.getDate() - Math.floor(Math.random() * 365))
+    dataLancamento.setDate(dataLancamento.getDate() - Math.floor(Math.random() * 400))
 
     const dataExpiracao = new Date(dataLancamento)
-    dataExpiracao.setMonth(dataExpiracao.getMonth() + Math.floor(Math.random() * 12) + 6) // Licença de 6-18 meses
+    dataExpiracao.setMonth(dataExpiracao.getMonth() + Math.floor(Math.random() * 18) + 6)
 
-    const dataConfiguracao = new Date(dataLancamento)
-    dataConfiguracao.setDate(dataConfiguracao.getDate() + Math.floor(Math.random() * 7) + 1) // Config em até 8 dias
-
-    // Gerar chave NFe realista (44 dígitos) para faturamento de licenças
-    const chaveNFe = `${Math.floor(Math.random() * 100000000000000000000000000000000000000000000)}`.padStart(44, "0")
-
-    const parceiro = parceiros[Math.floor(Math.random() * parceiros.length)]
-    const statusNotaFiscal = statusesNotaFiscal[Math.floor(Math.random() * statusesNotaFiscal.length)]
-    const produto = produtos[Math.floor(Math.random() * produtos.length)]
+    const chaveNFe = `3525${String(Date.now() + i).padEnd(40, "0").slice(-40)}`
 
     pedidos.push({
       duplicateCount: null,
       hasDuplicates: false,
-      status: statusesPedido[Math.floor(Math.random() * statusesPedido.length)],
-      grupo: grupos[Math.floor(Math.random() * grupos.length)],
-      filial: filiais[Math.floor(Math.random() * filiais.length)],
-      codigoTransportadora: parceiro ? `P${String(Math.floor(Math.random() * 999)).padStart(3, "0")}` : "",
-      nomeTransportadora: parceiro,
-      estado: estados[Math.floor(Math.random() * estados.length)],
+      status: ["Pendente Ativação", "Ativado", "Renovado", "Cancelado"][Math.floor(Math.random() * 4)],
+      grupo: ["GRUPO_ENTERPRISE", "GRUPO_STARTUP", "GRUPO_CORPORATE"][Math.floor(Math.random() * 3)],
+      filial: ["001-SAO", "002-RIO", "003-BH", "004-POR", "005-CUR"][Math.floor(Math.random() * 5)],
+      codigoTransportadora: Math.random() > 0.3 ? `P${String(Math.floor(Math.random() * 999)).padStart(3, "0")}` : "",
+      nomeTransportadora: Math.random() > 0.3 ? ["Parceiro Microsoft", "Revenda AWS", "Parceiro Google Cloud", "Venda Direta"][Math.floor(Math.random() * 4)] : null,
+      estado: ["SP", "RJ", "MG", "RS", "PR", "SC", "BA", "GO"][Math.floor(Math.random() * 8)],
       codigoDoCliente: `CLI${String(Math.floor(Math.random() * 9999)).padStart(4, "0")}`,
-      nomeCliente: nomes[Math.floor(Math.random() * nomes.length)],
-      numeroPedido: `LIC${String(i).padStart(6, "0")}`, // Licença em vez de pedido físico
+      nomeCliente: ["TechNova Softwares", "DigitalFlow SA", "CodeMaster", "ByteSolutions", "InnoTech"][Math.floor(Math.random() * 5)],
+      numeroPedido: `LIC${String(i).padStart(6, "0")}`,
       dataLancamentoPedido: format(dataLancamento, "yyyy-MM-dd"),
-      dataParaEntrega: format(dataExpiracao, "yyyy-MM-dd"), // Data de expiração da licença
-      statusDoPedido: statusesPedido[Math.floor(Math.random() * statusesPedido.length)],
-      dataPicking: format(dataConfiguracao, "yyyy-MM-dd"), // Data de configuração
-      statusPicking: statusesPicking[Math.floor(Math.random() * statusesPicking.length)],
-      notaFiscal: `NF${String(Math.floor(Math.random() * 999999)).padStart(6, "0")}`, // Nota fiscal para software
-      chaveNFe: chaveNFe,
-      statusNotaFiscal: statusNotaFiscal,
-      // Campo para produto de software
-      pedidosCompra: produto,
+      dataParaEntrega: format(dataExpiracao, "yyyy-MM-dd"),
+      statusDoPedido: ["Pendente Ativação", "Ativado", "Renovado", "Cancelado"][Math.floor(Math.random() * 4)],
+      notaFiscal: `NF${String(Math.floor(Math.random() * 999999)).padStart(6, "0")}`,
+      chaveNFe,
+      statusNotaFiscal: ["Autorizada", "Pendente", "Cancelada"][Math.floor(Math.random() * 3)],
+      pedidosCompra: ["Office 365 E5", "Azure AD Premium", "Dynamics 365", "Power BI Pro", "Windows Server 2022"][Math.floor(Math.random() * 5)],
+
+
+      dataPicking: null,
+      statusPicking: "Não Iniciado",
     })
   }
 
@@ -128,238 +103,118 @@ const generateFictionalPedidos = (): Pedido[] => {
 
 export const Pedidos: React.FC = () => {
   const [pedidos, setPedidos] = React.useState<Pedido[]>([])
-  const [allPedidos, _setAllPedidos] = React.useState<Pedido[]>(generateFictionalPedidos())
+  const [allPedidos] = React.useState<Pedido[]>(generateFictionalPedidos())
   const [loading, setLoading] = React.useState<boolean>(true)
-  const [_error, setError] = React.useState<string | null>(null)
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = React.useState({})
+  const [expanded, setExpanded] = React.useState<ExpandedState>({})
   const [searchType, setSearchType] = React.useState<SearchType>("numeroPedido")
   const [searchValue, setSearchValue] = React.useState<string>("")
   const [currentPeriodFilter, setCurrentPeriodFilter] = React.useState<PeriodFilter>("ultimoMes")
-  const [activeDateRange, setActiveDateRange] = React.useState<{
-    start: Date | undefined
-    end: Date | undefined
-  }>({
-    start: undefined,
-    end: undefined,
-  })
+  const [pageSize, setPageSize] = React.useState<number>(10)
 
-  const [pageSize, setPageSize] = React.useState<number>(9)
+  const [selectedPedido, setSelectedPedido] = React.useState<Pedido | null>(null)
+  const [isDrawerOpen, setIsDrawerOpen] = React.useState(false)
+  const [copiedField, setCopiedField] = React.useState<"danfe" | "xml" | null>(null)
 
   const columns = usePedidosColumns()
-
-  React.useEffect(() => {
-    console.log("Dados fictícios gerados:", pedidos.slice(0, 5)) // Mostra os primeiros 5 pedidos
-    console.log("Total de pedidos gerados:", pedidos.length)
-  }, [pedidos])
 
   const table = useReactTable({
     data: pedidos,
     columns,
-    state: {
-      sorting,
-      columnFilters,
-      columnVisibility,
-      rowSelection,
-    },
+    state: { sorting, columnFilters, columnVisibility, rowSelection, expanded },
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
+    onExpandedChange: setExpanded,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    initialState: {
-      pagination: {
-        pageSize: pageSize,
-      },
-    },
+    getExpandedRowModel: getExpandedRowModel(),
+    initialState: { pagination: { pageSize } },
   })
 
-  React.useEffect(() => {
-    table.setPageSize(pageSize)
-  }, [pageSize, table])
+  React.useEffect(() => { table.setPageSize(pageSize) }, [pageSize, table])
 
-  const fetchPedidosWithDateRange = async (startDate: Date, endDate: Date) => {
-    try {
-      setLoading(true)
-      setError(null)
-
-      setActiveDateRange({
-        start: startDate,
-        end: endDate,
-      })
-
-      // Simula delay de carregamento de 2 segundos
-      await new Promise(resolve => setTimeout(resolve, 3000))
-
-      // Filter fictional data by date range
-      const filteredPedidos = allPedidos.filter((pedido) => {
-        const pedidoDate = new Date(pedido.dataLancamentoPedido)
-        return pedidoDate >= startDate && pedidoDate <= endDate
-      })
-
-      setPedidos(filteredPedidos)
-      setError(filteredPedidos.length === 0 ? "empty" : null)
-
-      console.log("Pedidos filtrados por data:", filteredPedidos.length)
-    } catch (err) {
-      setError("error")
-    } finally {
-      setLoading(false)
-    }
+  const fetchPedidosWithDateRange = async (start: Date, end: Date) => {
+    setLoading(true)
+    await new Promise(r => setTimeout(r, 800))
+    const filtered = allPedidos.filter(p => {
+      const date = new Date(p.dataLancamentoPedido)
+      return date >= start && date <= end
+    })
+    setPedidos(filtered)
+    setLoading(false)
   }
 
-  // Função para aplicar o filtro de período selecionado
-  const applyPeriodFilter = (periodFilter: PeriodFilter) => {
-    setCurrentPeriodFilter(periodFilter)
-
+  const applyPeriodFilter = (period: PeriodFilter) => {
+    setCurrentPeriodFilter(period)
     const hoje = new Date()
     hoje.setHours(0, 0, 0, 0)
-
-    switch (periodFilter) {
-      case "todos":
-        const doisAnosAtras = subYears(hoje, 2)
-        fetchPedidosWithDateRange(doisAnosAtras, hoje)
-        break
-      case "ultimoAno":
-        const umAnoAtras = subYears(hoje, 1)
-        fetchPedidosWithDateRange(umAnoAtras, hoje)
-        break
-      case "ultimoMes":
-        const umMesAtras = subMonths(hoje, 1)
-        fetchPedidosWithDateRange(umMesAtras, hoje)
-        break
-      case "ultimos90Dias":
-        const noventaDiasAtras = subDays(hoje, 90)
-        fetchPedidosWithDateRange(noventaDiasAtras, hoje)
-        break
-    }
+    const start = period === "todos" ? subYears(hoje, 3) :
+      period === "ultimoAno" ? subYears(hoje, 1) :
+        period === "ultimos90Dias" ? subDays(hoje, 90) : subMonths(hoje, 1)
+    fetchPedidosWithDateRange(start, hoje)
   }
 
-  // Na primeira renderização, busca os dados do último mês
-  React.useEffect(() => {
-    applyPeriodFilter("ultimoMes")
-  }, [])
+  React.useEffect(() => { applyPeriodFilter("ultimoMes") }, [])
 
-  // Efeito para aplicar filtros de texto (número de pedido, status, nota fiscal)
   React.useEffect(() => {
-    if (searchType === "numeroPedido" || searchType === "notaFiscal") {
-      // For numeric fields, allow partial matching without removing non-numeric characters
-      table.getColumn(searchType)?.setFilterValue(searchValue)
-    } else if (searchType === "statusDoPedido") {
-      table.getColumn(searchType)?.setFilterValue(searchValue)
-    } else if (searchType === "pedidosCompra") {
-      if (searchValue.trim() === "") {
-        table.getColumn("pedidosCompra")?.setFilterValue(undefined)
-      } else {
-        table.getColumn("pedidosCompra")?.setFilterValue(searchValue)
-      }
-    }
+    if (!searchValue.trim()) table.resetColumnFilters()
+    else table.getColumn(searchType)?.setFilterValue(searchValue)
   }, [searchValue, searchType, table])
 
-
-
-  // Componente de Skeleton para a tabela (desktop)
-  const SkeletonTable = () => {
-    const headerGroup = table.getHeaderGroups()[0]
-    return (
-      <div className="hidden md:block rounded-md border">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
-                    {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {[...Array(pageSize)].map((_, index) => (
-              <TableRow key={index}>
-                {headerGroup.headers.map((header) => (
-                  <TableCell key={header.id}>
-                    <Skeleton className="h-4 w-full" />
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-    )
+  const formatChaveNFe = (chave: string) => {
+    if (chave.length !== 44) return chave
+    return chave.match(/.{1,4}/g)?.join(" ") || chave
   }
 
-  // Componente de Skeleton para cards (mobile)
-  const SkeletonCards = () => (
-    <div className="md:hidden space-y-4">
-      {[...Array(pageSize)].map((_, index) => (
-        <Card key={index} className="w-full">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <div className="flex flex-col space-y-1">
-                <Skeleton className="h-4 w-20" />
-                <Skeleton className="h-6 w-32" />
-              </div>
-              <Skeleton className="h-6 w-20 rounded-full" />
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              {[...Array(6)].map((_, i) => (
-                <div key={i}>
-                  <Skeleton className="h-3 w-16 mb-1" />
-                  <Skeleton className="h-4 w-full" />
-                </div>
-              ))}
-            </div>
-            <div className="pt-2 border-t">
-              <Skeleton className="h-3 w-24 mb-1" />
-              <Skeleton className="h-4 w-48" />
-            </div>
-            <div className="flex justify-between items-center pt-2 border-t text-xs">
-              <Skeleton className="h-3 w-16" />
-              <Skeleton className="h-3 w-16" />
-              <Skeleton className="h-3 w-16" />
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  )
+  const handleCopy = (text: string, type: "danfe" | "xml") => {
+    navigator.clipboard.writeText(text)
+    setCopiedField(type)
 
-  // Skeleton para paginação
-  const SkeletonPagination = () => (
-    <div className="flex items-center justify-center md:justify-between space-x-2 py-4 px-2">
-      <Skeleton className="h-8 w-64" />
-    </div>
-  )
+    toast(type === "danfe" ? "Chave DANFE copiada!" : "XML copiado!", {
+      style: { borderRadius: "8px", background: "#008000", color: "#fff" },
+    })
+
+    setTimeout(() => setCopiedField(null), 2000)
+  }
+
+
+  const StatusBadge = ({ status = "Pendente" }: { status?: string }) => {
+    const config: Record<string, { variant: any; icon: React.ReactNode }> = {
+      "Pendente Ativação": { variant: "default", icon: <Clock className="w-3.5 h-3.5" /> },
+      "Ativado": { variant: "secondary", icon: <CheckCircle2 className="w-3.5 h-3.5" /> },
+      "Renovado": { variant: "outline", icon: <Package className="w-3.5 h-3.5" /> },
+      "Cancelado": { variant: "destructive", icon: <AlertCircle className="w-3.5 h-3.5" /> },
+      "Autorizada": { variant: "secondary", icon: <CheckCircle2 className="w-3.5 h-3.5" /> },
+      "Pendente": { variant: "default", icon: <Clock className="w-3.5 h-3.5" /> },
+      "Cancelada": { variant: "destructive", icon: <AlertCircle className="w-3.5 h-3.5" /> },
+    }
+    const { variant = "default", icon } = config[status] || {}
+    return <Badge variant={variant} className="text-xs font-medium">{icon && <span className="mr-1">{icon}</span>}{status}</Badge>
+  }
 
   if (loading) {
     return (
-      <div className="w-full p-2 md:p-4">
-        <Skeleton className="h-8 w-48 mb-4" /> {/* Título */}
-        <Skeleton className="h-12 w-full mb-4 rounded-md" /> {/* Filtro */}
-        <SkeletonTable />
-        <SkeletonCards />
-        <SkeletonPagination />
+      <div className="p-6 space-y-6">
+        <Skeleton className="h-10 w-80" />
+        <Skeleton className="h-12 w-full rounded-xl" />
+        <Skeleton className="h-96 w-full rounded-xl" />
       </div>
     )
   }
 
-  
-
-  
-
   return (
-    <div className="w-full p-2 md:p-4">
-      <h1 className="text-2xl md:text-3xl font-bold mb-4">Pedidos</h1>
+    <div className="w-full space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Pedidos</h1>
+        <p className="text-muted-foreground">Gerencie seus pedidos em tempo real.</p>
+      </div>
 
       <PedidosFilter
         searchType={searchType}
@@ -368,38 +223,106 @@ export const Pedidos: React.FC = () => {
         setSearchValue={setSearchValue}
         currentPeriodFilter={currentPeriodFilter}
         applyPeriodFilter={applyPeriodFilter}
-        activeDateRange={activeDateRange}
-        setActiveDateRange={setActiveDateRange}
+        activeDateRange={{ start: undefined, end: undefined }}
+        setActiveDateRange={() => { }}
         fetchPedidosWithDateRange={fetchPedidosWithDateRange}
       />
 
-      <div className="hidden md:block rounded-md border">
+
+      {/* Tabela Desktop */}
+      <div className="hidden md:block rounded-xl border bg-card shadow-sm overflow-hidden">
         <Table>
           <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
-                    </TableHead>
-                  )
-                })}
+            {table.getHeaderGroups().map(hg => (
+              <TableRow key={hg.id} className="bg-muted/50">
+                {hg.headers.map(h => (
+                  <TableHead key={h.id} className="font-semibold">
+                    {flexRender(h.column.columnDef.header, h.getContext())}
+                  </TableHead>
+                ))}
               </TableRow>
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
+            {table.getRowModel().rows.length ? table.getRowModel().rows.map(row => {
+              const p = row.original
+              return (
+                <React.Fragment key={row.id}>
+                  <TableRow
+                    className="hover:bg-muted/50 cursor-pointer transition-colors"
+                    onClick={() => row.toggleExpanded()}
+                  >
+                    {row.getVisibleCells().map(cell => (
+                      <TableCell key={cell.id} className="py-4">
+                        <div className="flex items-center gap-2">
+                          {cell.column.id === "numeroPedido" && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={e => { e.stopPropagation(); row.toggleExpanded() }}
+                            >
+                              {row.getIsExpanded() ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                            </Button>
+                          )}
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </div>
+                      </TableCell>
+                    ))}
+                  </TableRow>
+
+                  {row.getIsExpanded() && (
+                    <TableRow>
+                      <TableCell colSpan={columns.length} className="p-0 bg-gradient-to-b from-muted/20 to-background">
+                        <div className="p-6 space-y-6">
+                          <div className="grid grid-cols-3 gap-8">
+                            <div>
+                              <h4 className="font-semibold flex items-center gap-2 mb-3"><Building2 className="w-4 h-4" /> Cliente</h4>
+                              <p className="font-medium">{p.nomeCliente}</p>
+                              <p className="text-sm text-muted-foreground">Cód: {p.codigoDoCliente} • {p.grupo}</p>
+                            </div>
+                            <div>
+                              <h4 className="font-semibold flex items-center gap-2 mb-3"><Package className="w-4 h-4" /> Produto</h4>
+                              <p className="font-medium">{p.pedidosCompra}</p>
+                              <p className="text-sm text-muted-foreground">
+                                Expira em: {format(new Date(p.dataParaEntrega), "dd/MM/yyyy")}
+                              </p>
+                            </div>
+                            <div>
+                              <h4 className="font-semibold flex items-center gap-2 mb-3"><Truck className="w-4 h-4" /> Distribuição</h4>
+                              <p className="font-medium">{p.nomeTransportadora || "Venda direta"}</p>
+                              <p className="text-sm text-muted-foreground">{p.filial} • {p.estado}</p>
+                            </div>
+                          </div>
+
+                          <div className="flex justify-between items-center pt-6 border-t">
+                            <div className="flex items-center gap-6">
+                              <div>
+                                <span className="text-muted-foreground">NF-e:</span>
+                                <span className="font-mono font-medium ml-2">{p.notaFiscal}</span>
+                              </div>
+                              <StatusBadge status={p.statusNotaFiscal} />
+                            </div>
+                            <Button
+                              size="sm"
+                              onClick={() => {
+                                setSelectedPedido(p)
+                                setIsDrawerOpen(true)
+                              }}
+                            >
+                              <FileArchive className="w-4 h-4 mr-2" />
+                              Ver DANFE/XML
+                            </Button>
+                          </div>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </React.Fragment>
+              )
+            }) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
+                <TableCell colSpan={columns.length} className="h-32 text-center text-muted-foreground">
                   Nenhum pedido encontrado.
                 </TableCell>
               </TableRow>
@@ -408,111 +331,190 @@ export const Pedidos: React.FC = () => {
         </Table>
       </div>
 
+      {/* Mobile Cards */}
       <div className="md:hidden space-y-4">
-        {table.getRowModel().rows?.length ? (
-          table.getRowModel().rows.map((row) => {
-            const pedido = row.original as Pedido
-            return (
-              <Card key={row.id} className="w-full">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex flex-col">
-                      <span className="text-sm font-medium text-muted-foreground">Pedido</span>
-                      <span className="text-lg font-semibold">#{pedido.numeroPedido}</span>
+        {table.getRowModel().rows.map(row => {
+          const p = row.original
+          return (
+            <Card key={row.id} className={cn("transition-all", row.getIsExpanded() && "ring-2 ring-primary")}>
+              <CardHeader className="pb-3 cursor-pointer" onClick={() => row.toggleExpanded()}>
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-3">
+                    <Button variant="ghost" size="icon" onClick={e => { e.stopPropagation(); row.toggleExpanded() }}>
+                      {row.getIsExpanded() ? <ChevronDown /> : <ChevronRight />}
+                    </Button>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Licença</p>
+                      <p className="text-xl font-bold">#{p.numeroPedido}</p>
                     </div>
-                    <Badge
-                      variant={
-                        pedido.statusDoPedido === "Pendente Ativação"
-                          ? "default"
-                          : pedido.statusDoPedido === "Ativado"
-                            ? "secondary"
-                            : pedido.statusDoPedido === "Renovado"
-                              ? "outline"
-                              : "destructive"
-                      }
+                  </div>
+                  <StatusBadge status={p.statusDoPedido ?? "Pendente"} />
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="text-sm space-y-2">
+                  <p><span className="text-muted-foreground">Cliente:</span> <span className="font-medium">{p.nomeCliente}</span></p>
+                  <p><span className="text-muted-foreground">Produto:</span> <span className="font-medium">{p.pedidosCompra}</span></p>
+                </div>
+                <Button
+                  className="w-full"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setSelectedPedido(p)
+                    setIsDrawerOpen(true)
+                  }}
+                >
+                  <FileText className="w-4 h-4 mr-2" />
+                  Ver DANFE/XML
+                </Button>
+              </CardContent>
+            </Card>
+          )
+        })}
+      </div>
+
+      <Paginacao
+        currentPage={table.getState().pagination.pageIndex + 1}
+        pageCount={table.getPageCount()}
+        pageSize={pageSize}
+        totalItems={table.getFilteredRowModel().rows.length}
+        onPageChange={p => table.setPageIndex(p - 1)}
+        onPageSizeChange={setPageSize}
+        showPageSizeSelector
+        showJumpToPage
+        showItemsInfo
+        pageSizeOptions={[10, 20, 50, 100]}
+      />
+
+      <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
+        <SheetContent className="w-full sm:max-w-2xl overflow-y-auto px-4">
+          <SheetHeader className="space-y-3 pb-6 border-b">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <Receipt className="w-6 h-6 text-blue-600" />
+              </div>
+              <div>
+                {/* Corrigido: SheetTitle não tem prop "title" */}
+                <SheetTitle className="text-2xl">Nota Fiscal Eletrônica</SheetTitle>
+                {selectedPedido && (
+                  <SheetDescription className="text-base mt-1">
+                    <span className="font-semibold text-slate-700">{selectedPedido.notaFiscal}</span>
+                    <span className="mx-2 text-slate-400">•</span>
+                    <span className="text-slate-600">Pedido {selectedPedido.numeroPedido}</span>
+                  </SheetDescription>
+                )}
+              </div>
+            </div>
+          </SheetHeader>
+
+          {selectedPedido && (
+            <Tabs defaultValue="danfe" className="mt-8">
+              <TabsList className="grid w-full grid-cols-2 bg-slate-100 p-1 h-auto">
+                <TabsTrigger value="danfe" className="data-[state=active]:bg-white data-[state=active]:shadow-sm py-3">
+                  <Receipt className="w-4 h-4 mr-2" />
+                  <span className="font-medium">Chave DANFE</span>
+                </TabsTrigger>
+                <TabsTrigger value="xml" className="data-[state=active]:bg-white data-[state=active]:shadow-sm py-3">
+                  <FileCode2 className="w-4 h-4 mr-2" />
+                  <span className="font-medium">XML Completo</span>
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="danfe" className="mt-6 space-y-6">
+                <div className="bg-white rounded-xl border shadow-sm p-6 space-y-4">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h4 className="font-semibold text-lg text-slate-800">Chave de Acesso</h4>
+                      <p className="text-sm text-slate-500 mt-1">44 dígitos da NF-e</p>
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => handleCopy(selectedPedido.chaveNFe, "danfe")}
+                      variant={copiedField === "danfe" ? "default" : "outline"}
                     >
-                      {pedido.statusDoPedido}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div>
-                      <span className="text-muted-foreground">Cliente:</span>
-                      <p className="font-medium truncate">{pedido.nomeCliente}</p>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Código:</span>
-                      <p className="font-medium">{pedido.codigoDoCliente}</p>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Lançamento:</span>
-                      <p className="font-medium">{format(new Date(pedido.dataLancamentoPedido), "dd/MM/yyyy")}</p>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Expiração:</span>
-                      <p className="font-medium">{format(new Date(pedido.dataParaEntrega), "dd/MM/yyyy")}</p>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Nota Fiscal:</span>
-                      <p className="font-medium">{pedido.notaFiscal}</p>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Status NF:</span>
-                      <Badge
-                        variant={
-                          pedido.statusNotaFiscal === "Autorizada"
-                            ? "default"
-                            : pedido.statusNotaFiscal === "Pendente"
-                              ? "secondary"
-                              : "destructive"
-                        }
-                        className="text-xs"
-                      >
-                        {pedido.statusNotaFiscal}
-                      </Badge>
-                    </div>
+                      {copiedField === "danfe" ? (
+                        <> <CheckCircle2 className="w-4 h-4 mr-2" /> Copiado! </>
+                      ) : (
+                        <> <Copy className="w-4 h-4 mr-2" /> Copiar </>
+                      )}
+                    </Button>
                   </div>
 
-                  {pedido.nomeTransportadora && (
-                    <div className="pt-2 border-t">
-                      <span className="text-muted-foreground text-sm">Parceiro:</span>
-                      <p className="font-medium text-sm">{pedido.nomeTransportadora}</p>
-                    </div>
-                  )}
+                  <Textarea
+                    value={formatChaveNFe(selectedPedido.chaveNFe)}
+                    readOnly
+                    className="font-mono text-base leading-relaxed h-28 resize-none bg-slate-50 border-slate-200 focus:ring-2 focus:ring-blue-500"
+                  />
 
-                  <div className="flex justify-between items-center pt-2 border-t text-xs text-muted-foreground">
-                    <span>Filial: {pedido.filial}</span>
-                    <span>Estado: {pedido.estado}</span>
-                    <span>Grupo: {pedido.grupo}</span>
+                  <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-100 rounded-lg">
+                    <ExternalLink className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
+                    <p className="text-sm text-blue-800">
+                      Use esta chave no portal da Sefaz para consultar ou imprimir o DANFE.
+                    </p>
                   </div>
-                </CardContent>
-              </Card>
-            )
-          })
-        ) : (
-          <Card>
-            <CardContent className="flex items-center justify-center h-24">
-              <p className="text-muted-foreground">Nenhum pedido encontrado.</p>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+                </div>
 
-      <div className="flex items-center justify-center md:justify-between space-x-2 py-4 px-2">
-        <Paginacao
-          currentPage={table.getState().pagination.pageIndex + 1}
-          pageCount={table.getPageCount()}
-          pageSize={pageSize}
-          totalItems={table.getFilteredRowModel().rows.length}
-          onPageChange={(page) => table.setPageIndex(page - 1)}
-          onPageSizeChange={setPageSize}
-          showPageSizeSelector={true}
-          showJumpToPage={true}
-          showItemsInfo={true}
-          pageSizeOptions={[5, 7, 10, 20, 50, 100]}
-        />
-      </div>
+                <div className="flex gap-3">
+                  <Button variant="outline" className="flex-1">
+                    <Download className="w-4 h-4 mr-2" />
+                    Baixar DANFE
+                  </Button>
+                  <Button variant="outline" className="flex-1">
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    Consultar Sefaz
+                  </Button>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="xml" className="mt-6 space-y-6">
+                <div className="bg-white rounded-xl border shadow-sm p-6 space-y-4">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h4 className="font-semibold text-lg text-slate-800">XML da NF-e</h4>
+                      <p className="text-sm text-slate-500 mt-1">Estrutura completa do documento fiscal</p>
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => handleCopy(`<nfeProc>${selectedPedido.chaveNFe}</nfeProc>`, "xml")}
+                      variant={copiedField === "xml" ? "default" : "outline"}
+                    >
+                      {copiedField === "xml" ? (
+                        <> <CheckCircle2 className="w-4 h-4 mr-2" /> Copiado! </>
+                      ) : (
+                        <> <Copy className="w-4 h-4 mr-2" /> Copiar </>
+                      )}
+                    </Button>
+                  </div>
+
+                  <Textarea
+                    value={`<?xml version="1.0" encoding="UTF-8"?>
+<nfeProc xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00">
+  <NFe>
+    <infNFe Id="NFe${selectedPedido.chaveNFe}" versao="4.00">
+      <ide>
+        <nNF>${selectedPedido.notaFiscal.replace("NF", "")}</nNF>
+        <dhEmi>${new Date().toISOString()}</dhEmi>
+      </ide>
+    </infNFe>
+  </NFe>
+</nfeProc>`}
+                    readOnly
+                    className="font-mono text-xs leading-relaxed h-96 resize-none bg-slate-50 border-slate-200 focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <Button className="w-full" variant="outline">
+                  <Download className="w-4 h-4 mr-2" />
+                  Baixar arquivo XML
+                </Button>
+              </TabsContent>
+            </Tabs>
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   )
 }
+
+
