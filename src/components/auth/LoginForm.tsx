@@ -23,10 +23,8 @@ import {
   X,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import api from "@/Api/api";  // ← IMPORTA A INSTÂNCIA ÚNICA E CORRETA
-import { useAuth } from "./hooks/useAuth";
-
-
+// import api from "@/Api/api";  // ← REMOVIDO/COMENTADO pois usaremos mock
+import { useAuth } from "@/components/auth/hooks/useAuth";
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -57,41 +55,48 @@ export function LoginPage() {
     return () => window.removeEventListener("mousemove", handleMouseMove);
   }, []);
 
-  // Dentro do seu LoginPage.tsx
-
-  // FUNÇÃO DE LOGIN (com .then() e .catch())
+  // FUNÇÃO DE LOGIN MOCKADO (Qualquer e-mail e senha acessam)
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
     setSuccess(null);
 
-    // Depois do login bem-sucedido
-    api.post("/users/login", { email, password })
-      .then((response) => {
-        const { token, user, message } = response.data;
+    // Simulamos um pequeno delay de rede de 800ms para manter a UX (spinner de carregamento)
+    setTimeout(() => {
+      // Extrai o nome do email (parte antes do @)
+      const emailName = email.split("@")[0] || "Usuário";
+      // Capitaliza a primeira letra
+      const displayFirstName = emailName.charAt(0).toUpperCase() + emailName.slice(1);
+      const displayLastName = ""; // No login, não temos sobrenome
+      const fullName = displayFirstName; // Nome completo = só o primeiro nome no login
 
-        // Salva os dados
-        localStorage.setItem("authToken", token);
-        localStorage.setItem("user", JSON.stringify(user));
+      const token = "mock-token-jwt-generated-locally";
+      const user = {
+        id: 999,
+        name: fullName,
+        email: email,
+        firstName: displayFirstName,
+        lastName: displayLastName,
+        avatar_url: null as null,
+      };
 
-        login(token, user)
+      // Salva os dados no localStorage para o restante do app ler se necessário
+      localStorage.setItem("authToken", token);
+      localStorage.setItem("user", JSON.stringify(user));
 
-        setSuccess(message || "Login realizado com sucesso!");
+      // Atualiza o estado global de autenticação
+      login(token, user);
 
-        // Redireciona imediatamente
-        navigate("/inicio", { replace: true });
-      })
-      .catch((err) => {
-        const msg = err.response?.data?.error || "Email ou senha incorretos";
-        setError(msg);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+      setSuccess("Login realizado com sucesso! (Modo Demonstração)");
+
+      // Redireciona imediatamente para a tela inicial
+      navigate("/inicio", { replace: true });
+      setLoading(false);
+    }, 800);
   };
 
-  // FUNÇÃO DE CADASTRO (com .then() e .catch())
+  // FUNÇÃO DE CADASTRO MOCKADO
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -106,25 +111,17 @@ export function LoginPage() {
       return;
     }
 
-    api
-      .post("/users", { name, email, password })
-      .then(() => {
-        setSuccess("Conta criada com sucesso! Faça login agora.");
-        setFirstName("");
-        setLastName("");
-        setEmail("");
-        setPassword("");
-        setActiveTab("login");
-      })
-      .catch((err) => {
-        const msg = err.response?.data?.error || "Erro ao criar conta";
-        setError(msg);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+    // Simulamos o sucesso de cadastro
+    setTimeout(() => {
+      setSuccess("Conta criada com sucesso! Faça login agora. (Modo Demonstração)");
+      setFirstName("");
+      setLastName("");
+      setEmail("");
+      setPassword("");
+      setActiveTab("login");
+      setLoading(false);
+    }, 800);
   };
-
 
   const features = [
     {
@@ -190,7 +187,7 @@ export function LoginPage() {
         />
 
         <motion.div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w2-96 h-96 bg-gradient-to-br from-pink-400/20 to-rose-400/20 dark:from-pink-600/10 dark:to-rose-600/10 rounded-full blur-3xl"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-br from-pink-400/20 to-rose-400/20 dark:from-pink-600/10 dark:to-rose-600/10 rounded-full blur-3xl"
           animate={{ scale: [1, 1.3, 1], rotate: [0, 90, 0] }}
           transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
         />
@@ -1008,83 +1005,15 @@ export function LoginPage() {
                           </motion.div>
                           <div className="relative">
                             <div className="flex items-baseline gap-2 mb-3">
-                              <motion.span
-                                className="text-5xl font-bold text-slate-900 dark:text-slate-100"
-                                initial={{ scale: 0 }}
-                                animate={{ scale: 1 }}
-                                transition={{ type: "spring", delay: 0.6 }}
-                              >
-                                R$ 99
-                              </motion.span>
-                              <span className="text-xl text-slate-600 dark:text-slate-400">/mês</span>
+                              <span className="text-5xl font-bold text-slate-900 dark:text-slate-100">
+                                R$ 49
+                              </span>
+                              <span className="text-slate-600 dark:text-slate-400">/mês</span>
                             </div>
-                            <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">
-                              Cancele quando quiser • Sem taxa de setup
+                            <p className="text-sm text-slate-600 dark:text-slate-400">
+                              Ideal para empresas em crescimento.
                             </p>
-                            <div className="space-y-2">
-                              {[
-                                "Sem limite de usuários",
-                                "Suporte prioritário",
-                                "Todas as funcionalidades",
-                              ].map((item, i) => (
-                                <motion.div
-                                  key={i}
-                                  className="flex items-center gap-2"
-                                  initial={{ opacity: 0, x: -20 }}
-                                  animate={{ opacity: 1, x: 0 }}
-                                  transition={{ delay: 0.7 + i * 0.1 }}
-                                >
-                                  <motion.div
-                                    animate={{ scale: [1, 1.2, 1] }}
-                                    transition={{ duration: 2, repeat: Infinity, delay: i * 0.2 }}
-                                  >
-                                    <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                                  </motion.div>
-                                  <span className="text-sm text-slate-700 dark:text-slate-300">{item}</span>
-                                </motion.div>
-                              ))}
-                            </div>
                           </div>
-                        </motion.div>
-                      </div>
-
-                      <div className="space-y-3 mt-6">
-                        <motion.button
-                          className="w-full h-14 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 hover:from-indigo-600 hover:to-purple-600 text-white font-semibold shadow-lg shadow-purple-500/30 transition-all duration-300 relative overflow-hidden group"
-                          whileHover={{ scale: 1.02, boxShadow: "0 20px 40px -10px rgba(139, 92, 246, 0.5)" }}
-                          whileTap={{ scale: 0.98 }}
-                        >
-                          <div className="relative flex items-center justify-center gap-2">
-                            <Crown className="h-5 w-5" />
-                            <span>Fazer Upgrade para Premium</span>
-                          </div>
-                          <motion.div
-                            className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0"
-                            style={{ transform: "skewX(-12deg)" }}
-                            animate={{ x: ["-100%", "200%"] }}
-                            transition={{ duration: 2, repeat: Infinity, repeatDelay: 0.5 }}
-                          />
-                        </motion.button>
-
-                        <motion.button
-                          onClick={() => setShowPremiumModal(false)}
-                          className="w-full h-12 text-sm font-medium rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                        >
-                          Talvez mais tarde
-                        </motion.button>
-
-                        <motion.div
-                          className="pt-2 text-center"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          transition={{ delay: 1 }}
-                        >
-                          <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-center gap-1">
-                            <Shield className="h-3 w-3" />
-                            Pagamento seguro • Garantia de 30 dias
-                          </p>
                         </motion.div>
                       </div>
                     </div>

@@ -209,7 +209,7 @@ export function Init({ authData }: InitProps) {
                       <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full mb-6 border border-white/30">
                         <Sparkles className="w-4 h-4 text-white animate-pulse" />
                         <span className="text-sm font-bold text-white uppercase tracking-wider">
-                          Seja Bem-Vindo ao Nexion, {user.name.split(" ") [0] }!
+                          Seja Bem-Vindo ao Nexion, {user.name.split(" ")[0]}!
                         </span>
                       </div>
 

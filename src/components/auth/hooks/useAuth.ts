@@ -1,4 +1,3 @@
-// src/hooks/useAuth.ts
 import { useEffect, useState } from "react";
 
 export interface User {
@@ -23,7 +22,21 @@ export function useAuth() {
       if (token && flag && raw) {
         try {
           const u = JSON.parse(raw);
-          const [firstName = "", lastName = ""] = (u.name || "").split(" ");
+          // Preserva firstName e lastName se já existirem no objeto salvo
+          // Só faz split do name se firstName/lastName não estiverem definidos
+          const hasFirstName = u.firstName && u.firstName.trim() !== "";
+          const hasLastName = u.lastName && u.lastName.trim() !== "";
+
+          let firstName = u.firstName || "";
+          let lastName = u.lastName || "";
+
+          // Só faz split do name se não tiver firstName/lastName salvos
+          if (!hasFirstName && !hasLastName && u.name) {
+            const [fn = "", ln = ""] = u.name.split(" ");
+            firstName = fn;
+            lastName = ln;
+          }
+
           setUser({ ...u, firstName, lastName });
           setIsAuthenticated(true);
         } catch (e) {

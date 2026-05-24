@@ -187,7 +187,7 @@ export function NavegationMenu({
     login?: string;
     email?: string;
     avatarUrl?: string;
-    isPremium?: boolean; // <- novo campo premium
+    isPremium?: boolean;
   } | null;
 }) {
   const [userLogin, setUserLogin] = useState("");
@@ -201,43 +201,58 @@ export function NavegationMenu({
   const location = useLocation();
   const { isMobile, isTablet, isLargeScreen } = useScreenSize();
 
-  const loadUserData = () => {
-    if (authData?.email) {
-      const storageKey = getUserStorageKey(authData.email);
-      const storedUserData = localStorage.getItem(storageKey);
+  // Função auxiliar para montar o nome completo a partir do authData
+  const getFullNameFromAuth = (data: typeof authData) => {
+    if (!data) return "";
+    if (data.firstName && data.lastName) {
+      return `${data.firstName} ${data.lastName}`;
+    }
+    if (data.firstName) return data.firstName;
+    if (data.email) {
+      const emailUsername = data.email.split("@")[0];
+      return emailUsername.charAt(0).toUpperCase() + emailUsername.slice(1);
+    }
+    if (data.login) return data.login;
+    return "Usuário";
+  };
 
-      if (storedUserData) {
-        try {
-          const userData = JSON.parse(storedUserData);
-          setUserLogin(userData.name);
-          setAvatarUrl(userData.avatarUrl);
-        } catch (error) {
-          setDefaultUserData();
+  const loadUserData = () => {
+    if (!authData?.email) {
+      setDefaultUserData();
+      return;
+    }
+
+    const storageKey = getUserStorageKey(authData.email);
+    const storedUserData = localStorage.getItem(storageKey);
+
+    if (storedUserData) {
+      try {
+        const userData = JSON.parse(storedUserData);
+        const storedName = userData.name || "";
+        const fullNameFromAuth = getFullNameFromAuth(authData);
+
+        // Se o nome salvo é apenas o firstName e authData tem lastName, usa o nome completo
+        if (storedName.trim() === (authData.firstName || "").trim() && authData.lastName) {
+          setUserLogin(fullNameFromAuth);
+        } else {
+          setUserLogin(storedName || fullNameFromAuth);
         }
-      } else {
+
+        setAvatarUrl(userData.avatarUrl);
+      } catch (error) {
         setDefaultUserData();
       }
-
-      setUserEmail(authData.email || "default@example.com");
+    } else {
+      setDefaultUserData();
     }
+
+    setUserEmail(authData.email || "default@example.com");
   };
 
   const setDefaultUserData = () => {
-    if (authData) {
-      if (authData.firstName) {
-        const fullName = authData.lastName ? `${authData.firstName} ${authData.lastName}` : authData.firstName;
-        setUserLogin(fullName);
-      } else if (authData.email) {
-        const emailUsername = authData.email.split("@")[0];
-        const firstName = emailUsername.charAt(0).toUpperCase() + emailUsername.slice(1);
-        setUserLogin(firstName);
-      } else if (authData.login) {
-        setUserLogin(authData.login);
-      }
-
-      if (authData.avatarUrl) {
-        setAvatarUrl(authData.avatarUrl);
-      }
+    setUserLogin(getFullNameFromAuth(authData));
+    if (authData?.avatarUrl) {
+      setAvatarUrl(authData.avatarUrl);
     }
   };
 
@@ -248,7 +263,15 @@ export function NavegationMenu({
       const { email, name, avatarUrl } = event.detail;
 
       if (email === authData?.email) {
-        setUserLogin(name);
+        // Se o nome atualizado não tem sobrenome mas authData tem, monta o nome completo
+        const fullNameFromAuth = getFullNameFromAuth(authData);
+        const updatedName = name || "";
+
+        if (updatedName.trim() === (authData?.firstName || "").trim() && authData?.lastName) {
+          setUserLogin(fullNameFromAuth);
+        } else {
+          setUserLogin(name);
+        }
         setAvatarUrl(avatarUrl);
       }
     };

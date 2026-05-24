@@ -16,6 +16,17 @@ import { useAuth } from "@/components/auth/hooks/useAuth";
 export function App() {
   const { user, isAuthenticated, logout } = useAuth();
 
+  // Mapeia o User do useAuth para o formato que Init espera
+  const authData = user
+    ? {
+        name: user.name,                    // ← ADICIONADO
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        avatarUrl: user.avatar_url || undefined,
+      }
+    : null;
+
   return (
     <ThemeProvider defaultTheme="system" storageKey="system">
       <Router>
@@ -32,8 +43,8 @@ export function App() {
               path="/inicio"
               element={
                 isAuthenticated ? (
-                  <AuthenticatedLayout user={user} onLogout={logout}>
-                    <Init authData={user} />
+                  <AuthenticatedLayout authData={authData} onLogout={logout}>
+                    <Init authData={authData} />
                   </AuthenticatedLayout>
                 ) : (
                   <Navigate to="/login" replace />
@@ -45,7 +56,7 @@ export function App() {
               path="/pedidos"
               element={
                 isAuthenticated ? (
-                  <AuthenticatedLayout user={user} onLogout={logout}>
+                  <AuthenticatedLayout authData={authData} onLogout={logout}>
                     <Pedidos />
                   </AuthenticatedLayout>
                 ) : (
@@ -58,7 +69,7 @@ export function App() {
               path="/boletos"
               element={
                 isAuthenticated ? (
-                  <AuthenticatedLayout user={user} onLogout={logout}>
+                  <AuthenticatedLayout authData={authData} onLogout={logout}>
                     <Boletos />
                   </AuthenticatedLayout>
                 ) : (
@@ -71,7 +82,7 @@ export function App() {
               path="/rastreio-pedidos"
               element={
                 isAuthenticated ? (
-                  <AuthenticatedLayout user={user} onLogout={logout}>
+                  <AuthenticatedLayout authData={authData} onLogout={logout}>
                     <PedidoTruck />
                   </AuthenticatedLayout>
                 ) : (
@@ -84,7 +95,7 @@ export function App() {
               path="/dashboard"
               element={
                 isAuthenticated ? (
-                  <AuthenticatedLayout user={user} onLogout={logout}>
+                  <AuthenticatedLayout authData={authData} onLogout={logout}>
                     <Dashboard />
                   </AuthenticatedLayout>
                 ) : (
@@ -109,16 +120,22 @@ export function App() {
 
 function AuthenticatedLayout({
   children,
-  user,
+  authData,
   onLogout,
 }: {
   children: React.ReactNode;
-  user: any;
+  authData: {
+    name: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    avatarUrl?: string;
+  } | null;
   onLogout: () => void;
 }) {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <NavegationMenu onLogout={onLogout} authData={user} />
+      <NavegationMenu onLogout={onLogout} authData={authData} />
       <main className="relative">
         <div className="mx-auto px-4 py-6">{children}</div>
       </main>

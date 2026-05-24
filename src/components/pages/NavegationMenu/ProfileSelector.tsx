@@ -144,10 +144,11 @@ export function ProfileSelector({ isOpen, onClose, currentUser, onSaveChanges }:
         // Salvar no localStorage
         saveUserStateToStorage(userName, avatarPreview)
 
-        // Reset success message after delay
+        // Fechar o sheet automaticamente após 1.5 segundos
         setTimeout(() => {
           setSaveSuccess(false)
-        }, 3000)
+          onClose()
+        }, 1500)
       } else {
         setSaveError("Não foi possível salvar as alterações. Tente novamente.")
       }
